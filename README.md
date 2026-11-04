@@ -62,6 +62,8 @@ npm run dev
 
 `npm run build` writes plain static files to `dist/`, which any static host can serve.
 
+`npm test` checks the translation dictionaries. `npm run test:e2e` drives the production build in Chromium (run `npx playwright install chromium` once first).
+
 ## License
 
 [MIT](LICENSE)

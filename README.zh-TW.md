@@ -62,6 +62,8 @@ npm run dev
 
 `npm run build` 輸出到 `dist/`，是純靜態檔案，任何靜態主機都能放。
 
+`npm test` 檢查翻譯字典；`npm run test:e2e` 用 Chromium 實際操作正式 build（第一次先跑 `npx playwright install chromium`）。
+
 ## 授權
 
 [MIT](LICENSE)

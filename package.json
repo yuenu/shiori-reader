@@ -10,12 +10,14 @@
     "dev": "vite",
     "build": "vite build --manifest asset-manifest.json",
     "preview": "vite preview",
-    "test": "node --test"
+    "test": "node --test",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "foliate-js": "^1.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "vite": "^8.3.5"
   }
 }

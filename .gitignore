@@ -8,3 +8,7 @@ dist/
 .impeccable/config.local.json
 .impeccable/hook.cache.json
 .impeccable/questions/
+
+# Playwright 測試產物
+test-results/
+playwright-report/
