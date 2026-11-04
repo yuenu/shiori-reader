@@ -432,6 +432,12 @@ const openBook = async (id, cfi) => {
         $('#viewer').append(view)
         await view.open(book)
         view.addEventListener('relocate', onRelocate)
+        // foliate 預設用 window.open 開外部連結且不帶 noopener，新分頁能透過 opener 把這頁導去釣魚頁
+        // 只放行網頁和 mail，書裡其他協定（自訂 app 協定等）不開
+        view.addEventListener('external-link', e => {
+            e.preventDefault()
+            if (/^(https?|mailto):/i.test(e.detail.href)) open(e.detail.href, '_blank', 'noopener')
+        })
         view.addEventListener('load', ({ detail: { doc } }) => {
             doc.addEventListener('keydown', onKey)
             doc.addEventListener('click', onDocClick(doc))

@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <!-- 書本 iframe 必須 allow-scripts + allow-same-origin（foliate-js 限制），靠 CSP 擋掉 EPUB 內的 JS -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'">
+    <!-- 書的資源都是 blob:/data:，其餘外部網址一律不載：書裡的追蹤圖片、外部 CSS／iframe／表單不會在開書時連出去 -->
+    <!-- frame-ancestors 等只能用標頭設定，見 public/_headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
     <title>書架</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='3' width='20' height='26' rx='2' fill='%231c1c1e'/%3E%3Cpath d='M19 3h4v14l-2-2-2 2z' fill='%23d9472b'/%3E%3C/svg%3E">
     <script type="module" src="/src/main.js"></script>

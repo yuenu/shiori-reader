@@ -1,0 +1,7 @@
+# Cloudflare 靜態資源的回應標頭
+# frame-ancestors：不讓別的網站把書架嵌進 iframe（meta CSP 不支援這個）
+# COOP：從這頁開出的分頁拿不到 window.opener，外部連結再多一層保護
+/*
+  Content-Security-Policy: frame-ancestors 'none'
+  Cross-Origin-Opener-Policy: same-origin
+  X-Content-Type-Options: nosniff
