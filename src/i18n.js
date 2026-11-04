@@ -40,6 +40,8 @@ const en = {
     '分頁': 'Paged',
     '捲動': 'Scrolled',
     '放開以加入書架': 'Drop to add to library',
+    '載入範例書': 'Load sample books',
+    '範例書下載失敗，請稍後再試。': 'Couldn’t download the sample books. Please try again later.',
     '、': ', ',
     '讀完': 'Finished',
     '未讀': 'Unread',

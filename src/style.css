@@ -86,6 +86,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .btn:active { transform: translateY(1px); }
 .btn-accent { background: var(--accent); color: var(--accent-ink); }
 .btn-accent:hover { background: color-mix(in srgb, var(--accent) 86%, black); }
+.btn-quiet { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.btn-quiet:hover { box-shadow: inset 0 0 0 1px var(--ink-2); }
 .btn[aria-busy="true"] { opacity: .7; cursor: progress; pointer-events: none; }
 .btn .icon { width: 18px; height: 18px; stroke-width: 2; }
 
@@ -371,7 +373,8 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .empty-shelf i:nth-child(2) { width: 46px; }
 .empty-lead { margin: 0 0 6px; font: 700 20px/1.4 var(--serif); color: var(--ink); }
-.empty p:last-child { margin: 0; font-size: 14px; }
+.empty p:last-of-type { margin: 0; font-size: 14px; }
+.empty-action { margin-top: 20px; }
 
 #drop-hint {
     position: fixed;

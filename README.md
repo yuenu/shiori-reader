@@ -16,8 +16,10 @@ Demo：https://shiori-reader.miraiku82.workers.dev
 - 排版：字級、行距、字體（原書／明體／黑體）、底色（白紙／書皮／夜讀）、直排／橫排、分頁／捲動
 - 目次
 - 介面語言：繁體中文、英文，依瀏覽器語言自動切換；網址加 `?lang=en` 或 `?lang=zh` 可指定
+- 開過一次後可離線使用
+- 書架是空的時候，可一鍵載入範例書
 
-尚未支援：書籤、劃線筆記、全文搜尋、離線使用。
+尚未支援：書籤、劃線筆記、全文搜尋。
 
 需要支援 Popover API 的瀏覽器（Chrome 114、Safari 17、Firefox 125 以上）。
 
@@ -41,3 +43,8 @@ npm run dev
 [MIT](LICENSE)
 
 渲染引擎是 [foliate-js](https://github.com/johnfactotum/foliate-js)（MIT），其中隨附 [zip.js](https://github.com/gildas-lormeau/zip.js)（BSD-3-Clause）與 [fflate](https://github.com/101arrowz/fflate)（MIT）。
+
+範例書（`public/samples/`）皆為公有領域：
+
+- 魯迅《吶喊》：文字取自[維基文庫](https://zh.wikisource.org/wiki/吶喊)（底本為 1948 年版《魯迅全集》），由本專案排成直排 EPUB
+- Arthur Conan Doyle《The Adventures of Sherlock Holmes》：[Standard Ebooks](https://standardebooks.org/ebooks/arthur-conan-doyle/the-adventures-of-sherlock-holmes) 製作，CC0

@@ -185,6 +185,24 @@ const importFiles = async files => {
     renderLibrary()
 }
 
+// 範例書放在 public/samples，抓下來當成使用者匯入的檔案；後加入的排在前面，所以《吶喊》放最後
+const samples = ['arthur-conan-doyle_the-adventures-of-sherlock-holmes.epub', 'lu-xun_nahan.epub']
+$('#samples-btn').onclick = async ({ currentTarget: btn }) => {
+    btn.setAttribute('aria-busy', 'true')
+    try {
+        const files = await Promise.all(samples.map(async name => {
+            const res = await fetch(`/samples/${name}`)
+            if (!res.ok) throw new Error(`${name}: ${res.status}`)
+            return new File([await res.blob()], name, { type: 'application/epub+zip' })
+        }))
+        await importFiles(files)
+    } catch (e) {
+        console.error(e)
+        toast(t('範例書下載失敗，請稍後再試。'))
+    }
+    btn.removeAttribute('aria-busy')
+}
+
 $('#file-input').addEventListener('change', e => {
     importFiles([...e.target.files])
     e.target.value = ''
@@ -319,3 +337,6 @@ $('#toc').addEventListener('toggle', e => {
 
 applySettings()
 renderLibrary()
+
+// 離線可用；開發模式不註冊，免得快取住 Vite 的開發模組
+if (import.meta.env.PROD) navigator.serviceWorker?.register('/sw.js')
