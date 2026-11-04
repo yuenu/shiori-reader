@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # 直接 commit 到 main、沒有 PR，--generate-notes 只會產生 compare 連結，所以先列出這版的 commit
+      - run: |
+          prev=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          gh release create "$GITHUB_REF_NAME" --notes "$(git log --format='- %s' ${prev:+$prev..}"$GITHUB_REF_NAME")" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
