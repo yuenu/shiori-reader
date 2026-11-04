@@ -23,6 +23,15 @@
     --gap: 28px;
     color-scheme: light; /* 必須與書本 iframe 一致，否則 iframe 會畫出不透明底色 */
 }
+/* 簡中、日文介面換成當地字形的字體，漢字寫法各地不同 */
+:root:lang(zh-Hans) {
+    --sans: system-ui, -apple-system, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "Noto Serif CJK SC", "SimSun", serif;
+}
+:root:lang(ja) {
+    --sans: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+    --serif: "Hiragino Mincho ProN", "Noto Serif JP", "Source Han Serif JP", "Noto Serif CJK JP", "Yu Mincho", serif;
+}
 [data-theme="sepia"] {
     --ground: #ebe1ca;
     --paper: #f4ecd8;
@@ -700,6 +709,8 @@ kbd {
     background: var(--ground);
 }
 .seg label { position: relative; flex: 1; min-width: 0; }
+/* 四個語言排一列太擠，排成兩列 */
+.seg-2 { display: grid; grid-template-columns: 1fr 1fr; }
 .seg input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
 .seg span {
     display: grid;

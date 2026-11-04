@@ -18,7 +18,7 @@ web
 ## Operating Context
 - 書庫：匯入（按鈕或拖曳）、瀏覽、刪除書籍，依最近閱讀排序。
 - 閱讀器：目錄、翻頁（按鈕／方向鍵／觸控滑動）、進度條、排版設定（字級、行距、字體、主題、直／橫排、分頁／捲動）。
-- 設定為全域、存在 localStorage。書架頁也能打開設定面板，調底色、介面語言（繁中／英文）與是否保存書籍。
+- 設定為全域、存在 localStorage。書架頁也能打開設定面板，調底色、介面語言（繁中／簡中／日文／英文）與是否保存書籍。
 
 ## Capabilities and Constraints
 - Vanilla JS + Vite，渲染交給 foliate-js（`<foliate-view>`，書本內容在 iframe 裡）。

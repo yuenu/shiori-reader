@@ -16,7 +16,7 @@ Demo: https://shiori.josh-hsu.com
 - Turning pages: buttons, arrow keys, Space / Page Down, tapping the left or right side, swiping
 - Typography: size, line spacing, font (original / serif / sans), theme (paper / sepia / night), vertical or horizontal writing, paged or scrolled
 - Table of contents
-- Interface in English or Traditional Chinese. It follows your browser language; change it in Settings on the library page, or add `?lang=en` / `?lang=zh` to the URL
+- Interface in English, Traditional Chinese, Simplified Chinese or Japanese. It follows your browser language; change it in Settings on the library page, or add `?lang=en` / `?lang=zh-Hant` / `?lang=zh-Hans` / `?lang=ja` to the URL
 - Works offline after the first visit
 
 Not yet supported: bookmarks, highlights and notes, full-text search.
