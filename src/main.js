@@ -1,7 +1,7 @@
 import { makeBook } from 'foliate-js/view.js'
 import { createTOCView } from 'foliate-js/ui/tree.js'
 import * as db from './db.js'
-import { t } from './i18n.js'
+import { t, lang, setLang } from './i18n.js'
 import './style.css'
 
 const $ = s => document.querySelector(s)
@@ -12,6 +12,8 @@ const text = x => typeof x === 'string' ? x
 // 製書工具留下的「[Creator name here]」之類佔位字不算作者
 const formatAuthor = a => [a ?? []].flat().map(text).filter(s => !/^\[.*\]$/.test(s)).join(t('、'))
 const pct = f => `${Math.round((f ?? 0) * 100)}%`
+// 書名、作者標上書的語言：螢幕閱讀器才會用對的語音念，日文書名也會用日文字形
+const setBookLang = (el, book) => book.language ? el.lang = book.language : el.removeAttribute('lang')
 
 let toastTimer
 const toast = (msg, ms = 4000) => {
@@ -32,7 +34,11 @@ const fonts = {
     serif: '"Songti TC", "Noto Serif TC", "Source Han Serif TC", "Noto Serif CJK TC", serif',
     sans: '"PingFang TC", "Noto Sans TC", "Source Han Sans TC", "Noto Sans CJK TC", sans-serif',
 }
-const settings = { fontSize: 100, lineHeight: 1.7, font: '', theme: 'light', writing: '', flow: 'paginated' }
+// 底色預設跟著系統的深淺色；persist 不給預設值，交給 db.init 判斷（見 db.js）
+const settings = {
+    fontSize: 100, lineHeight: 1.7, font: '', writing: '', flow: 'paginated',
+    theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+}
 try { Object.assign(settings, JSON.parse(localStorage.getItem('settings'))) } catch {}
 
 // 注入書本 iframe 的樣式；背景透明，讓外層的紙色透出來
@@ -71,12 +77,20 @@ const form = $('#settings')
 // RadioNodeList.value = '' 不會勾選 value="" 的選項，所以逐一比對
 for (const input of form.querySelectorAll('input[type=radio]'))
     input.checked = String(settings[input.name]) === input.value
+form.elements.lang.value = lang
 form.addEventListener('input', e => {
     const { name, value } = e.target
+    // 保存與否要二次確認，確認前不動設定
+    if (name === 'persist') return askPersist(value === 'true', 'settings')
     settings[name] = value !== '' && !isNaN(value) ? +value : value
     saveSettings()
+    if (name === 'lang') {
+        setLang(value)
+        document.title = t('書架')
+        renderLibrary()
+    }
     // foliate 只在章節載入時判斷排版方向，切換直/橫排要重開這本書
-    if (name === 'writing' && current) openBook(current.id, view.lastLocation?.cfi)
+    else if (name === 'writing' && current) openBook(current.id, view.lastLocation?.cfi)
     else applySettings()
 })
 form.addEventListener('click', e => {
@@ -86,6 +100,49 @@ form.addEventListener('click', e => {
     saveSettings()
     applySettings()
 })
+
+// ---- 保存 ----
+
+const syncPersist = () => {
+    form.elements.persist.value = String(settings.persist)
+    document.documentElement.dataset.persist = settings.persist
+}
+
+const persistDialog = $('#persist-dialog')
+const askPersist = (on, from = '') => {
+    syncPersist()
+    persistDialog.dataset.on = on
+    persistDialog.dataset.from = from
+    $('#persist-title').textContent = t(on ? '在這台裝置保存書籍？' : '不再保存書籍？')
+    $('#persist-desc').textContent = t(on
+        ? '書和閱讀進度會存在這個瀏覽器裡，下次打開還在，不會上傳。共用或公用電腦上建議不要開啟。'
+        : '已保存的書會從這台裝置移除。關閉這個分頁前還能繼續讀，之後書架就會清空。')
+    $('#persist-confirm').textContent = t(on ? '保存在這台裝置' : '不再保存')
+    // 按 Esc 關閉不會改 returnValue，先清掉上一次的結果
+    persistDialog.returnValue = ''
+    persistDialog.showModal()
+}
+const applyPersist = async on => {
+    try {
+        await db.setPersist(on)
+    } catch (e) {
+        console.error(e)
+        return toast(t('無法切換保存設定，請稍後再試。'))
+    }
+    settings.persist = on
+    saveSettings()
+    syncPersist()
+    toast(t(on ? '書架會保存在這台裝置' : '已不再保存，關閉分頁後書架會清空'))
+}
+persistDialog.addEventListener('close', async () => {
+    if (persistDialog.returnValue === 'confirm') await applyPersist(persistDialog.dataset.on === 'true')
+    // showModal 會關掉設定面板，焦點還不回去：從面板來就把面板開回來；從書架提示來而提示已經消失，就放到第一本書
+    if (persistDialog.dataset.from === 'settings') {
+        form.showPopover()
+        form.querySelector('input[name=persist]:checked')?.focus()
+    } else if (!$('#keep-btn').offsetParent) $('.book-cover')?.focus()
+})
+$('#keep-btn').onclick = () => askPersist(true)
 
 // ---- 書架 ----
 
@@ -109,6 +166,7 @@ const fillCover = (slot, book) => {
         gen.innerHTML = '<span class="gen-title"></span><span class="gen-author"></span>'
         gen.firstChild.textContent = book.title
         gen.lastChild.textContent = book.author
+        setBookLang(gen, book)
         slot.replaceChildren(gen)
     }
 }
@@ -127,6 +185,7 @@ const renderLibrary = async () => {
         c.dataset.id = last.id
         fillCover(c.querySelector('.cover-slot'), last)
         c.querySelector('h2').textContent = last.title
+        setBookLang(c.querySelector('h2'), last)
         c.querySelector('.continue-author').textContent = last.author
         c.querySelector('.continue-where').textContent = last.chapter
             ? t('讀到「{chapter}」・{pct}', { chapter: last.chapter, pct: pct(last.fraction) })
@@ -137,6 +196,7 @@ const renderLibrary = async () => {
     $('#count').textContent = books.length || ''
     $('#empty').hidden = books.length > 0
     $('#shelf-title').hidden = !books.length
+    $('#storage-hint').hidden = !books.length
     // 書架有書時，主要動作是讀書：加入書籍退成次要按鈕，朱色留給繼續閱讀
     $('#add-btn').classList.toggle('btn-accent', !books.length)
     $('#add-btn').classList.toggle('btn-quiet', books.length > 0)
@@ -145,6 +205,7 @@ const renderLibrary = async () => {
         const q = s => li.querySelector(s)
         fillCover(q('.cover-slot'), book)
         q('.book-title').textContent = book.title
+        setBookLang(q('.book-title'), book)
         q('.book-author').textContent = book.author
         const done = book.fraction >= 0.995
         const state = done ? t('讀完') : book.fraction ? t('讀到 {pct}', { pct: pct(book.fraction) }) : t('未讀')
@@ -188,6 +249,8 @@ const importFiles = async files => {
                 id,
                 title: text(book.metadata?.title) || file.name.replace(/\.epub$/i, ''),
                 author: formatAuthor(book.metadata?.author),
+                // EPUB 給的是陣列，其他格式可能是字串
+                language: [book.metadata?.language].flat()[0],
                 cover: await Promise.resolve(book.getCover?.()).catch(() => null) ?? null,
                 addedAt: Date.now(),
             }, file)
@@ -261,6 +324,8 @@ let view, current, tocView
 const show = name => {
     // 開書時多推一筆瀏覽紀錄：瀏覽器返回鍵／手機返回手勢會回到書架，而不是離開網站
     if (name === 'reader' && $('#reader').hidden) history.pushState({ reader: true }, '')
+    // 設定面板依這個決定哪些欄位要出現（data-scope）
+    document.documentElement.dataset.view = name
     $('#library').hidden = name !== 'library'
     $('#reader').hidden = name !== 'reader'
     if (name === 'library') document.title = t('書架')
@@ -303,7 +368,7 @@ const keys = {
 }
 const onKey = e => {
     // 面板開著時按鍵留給面板（Esc 關面板，不要順便收工具列）
-    if ($('#reader').hidden || $('#reader :popover-open') || e.target.closest?.('input, select')
+    if ($('#reader').hidden || $(':popover-open') || e.target.closest?.('input, select')
         || e.metaKey || e.ctrlKey || e.altKey) return
     // 工具列收起時按 Tab 先叫出來，焦點才有地方去（不擋預設，焦點照常前進）
     if (e.key === 'Tab') return setChrome(true)
@@ -335,8 +400,9 @@ const openBook = async (id, cfi) => {
         closeBook()
         current = meta
         $('#viewer').replaceChildren(Object.assign(document.createElement('p'), {
-            className: 'viewer-loading', textContent: t('正在打開…') }))
+            className: 'viewer-loading', role: 'status', textContent: t('正在打開…') }))
         $('#book-title').textContent = document.title = meta.title
+        setBookLang($('#book-title'), meta)
         $('#chapter').textContent = ''
         setChrome(true)
         show('reader')
@@ -387,7 +453,7 @@ const openBook = async (id, cfi) => {
 
 const leaveReader = async () => {
     const id = current?.id
-    for (const p of document.querySelectorAll('#reader :popover-open')) p.hidePopover()
+    for (const p of document.querySelectorAll(':popover-open')) p.hidePopover()
     closeBook()
     show('library')
     await renderLibrary()
@@ -421,7 +487,13 @@ $('#toc').addEventListener('toggle', e => {
 })
 
 applySettings()
-renderLibrary()
+// 先確定書放在記憶體還是 IndexedDB，才畫得出書架
+db.init(settings.persist).then(on => {
+    settings.persist = on
+    saveSettings()
+    syncPersist()
+    renderLibrary()
+})
 
 // 離線可用；開發模式不註冊，免得快取住 Vite 的開發模組
 if (import.meta.env.PROD) navigator.serviceWorker?.register('/sw.js')

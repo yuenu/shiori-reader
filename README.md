@@ -1,50 +1,74 @@
 # shiori-reader
 
-在瀏覽器裡讀 EPUB。不需後端、不需帳號，書只存在你的瀏覽器裡。中文直排是一等公民。
+[![English](https://img.shields.io/badge/lang-English-c63d22)](README.md) [![繁體中文](https://img.shields.io/badge/lang-%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87-5f5f64)](README.zh-TW.md)
 
-A browser-only EPUB reader with first-class CJK vertical text. No server, no account — books stay in your browser.
+A browser-only EPUB reader with first-class CJK vertical text. No server, no account, and nothing is uploaded.
 
-Demo：https://shiori-reader.miraiku82.workers.dev
+Demo: https://shiori-reader.miraiku82.workers.dev
 
-![書架](docs/screenshot.png)
+![The library: books stand on a shelf with an obi band showing reading progress](docs/screenshot.png)
 
-## 功能
+## Features
 
-- 匯入：按「加入書籍」選檔，或直接把 .epub 拖進視窗，可一次多本
-- 書架依最近閱讀排序，打開就回到上次讀到的地方
-- 翻頁：按鈕、方向鍵、點畫面左右兩側、觸控滑動
-- 排版：字級、行距、字體（原書／明體／黑體）、底色（白紙／書皮／夜讀）、直排／橫排、分頁／捲動
-- 目次
-- 介面語言：繁體中文、英文，依瀏覽器語言自動切換；網址加 `?lang=en` 或 `?lang=zh` 可指定
-- 開過一次後可離線使用
-- 書架是空的時候，可一鍵載入範例書
+- Import: click **Add books** or drop .epub files onto the window, several at a time
+- An empty shelf offers public-domain sample books in one click
+- The library is sorted by what you read last, and a book opens where you left off
+- Turning pages: buttons, arrow keys, Space / Page Down, tapping the left or right side, swiping
+- Typography: size, line spacing, font (original / serif / sans), theme (paper / sepia / night), vertical or horizontal writing, paged or scrolled
+- Table of contents
+- Interface in English or Traditional Chinese. It follows your browser language; change it in Settings on the library page, or add `?lang=en` / `?lang=zh` to the URL
+- Works offline after the first visit
 
-尚未支援：書籤、劃線筆記、全文搜尋。
+Not yet supported: bookmarks, highlights and notes, full-text search.
 
-需要支援 Popover API 的瀏覽器（Chrome 114、Safari 17、Firefox 125 以上）。
+Requires a browser with the Popover API (Chrome 114, Safari 17, Firefox 125 or later).
 
-## 隱私
+## Privacy and storage
 
-書和閱讀進度存在瀏覽器的 IndexedDB，不會上傳到任何伺服器。清除網站資料會一併清掉書架。
+By default, books stay in the current tab only. They are held in memory, never uploaded, and gone once you close the tab.
 
-## 開發
+To keep your shelf, open **Settings** on the library page and set **Keep books** to **On this device**. You'll be asked to confirm; after that, books and reading progress are stored in the browser's IndexedDB on this device. Switching back to **This tab only** removes them from the device (also after a confirmation). Clearing the site's data clears the shelf too.
 
-需要 Node 22（見 `.nvmrc`）。
+Settings such as theme, typography and language are stored in localStorage.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| ← / → | Turn the page left / right |
+| Space, Page Down | Next page |
+| Shift + Space, Page Up | Previous page |
+| Esc | Show or hide the toolbar |
+| Tab | Brings the toolbar back when it's hidden |
+
+The browser's back button and the mobile back gesture return to the library.
+
+## Accessibility
+
+- All controls can be reached and used with a keyboard, with a visible focus ring
+- Screen readers get labelled buttons, reading progress as a percentage, status messages for imports and errors, and book titles marked with the book's own language
+- The first theme follows your system's light or dark mode; reduced-motion and Windows High Contrast settings are respected
+
+Found a barrier? Please open an issue.
+
+## Development
+
+Requires Node 22 (see `.nvmrc`).
 
 ```sh
 npm install
 npm run dev
 ```
 
-`npm run build` 輸出到 `dist/`，是純靜態檔案，任何靜態主機都能放。
+`npm run build` writes plain static files to `dist/`, which any static host can serve.
 
-## 授權
+## License
 
 [MIT](LICENSE)
 
-渲染引擎是 [foliate-js](https://github.com/johnfactotum/foliate-js)（MIT），其中隨附 [zip.js](https://github.com/gildas-lormeau/zip.js)（BSD-3-Clause）與 [fflate](https://github.com/101arrowz/fflate)（MIT）。
+The rendering engine is [foliate-js](https://github.com/johnfactotum/foliate-js) (MIT), which bundles [zip.js](https://github.com/gildas-lormeau/zip.js) (BSD-3-Clause) and [fflate](https://github.com/101arrowz/fflate) (MIT).
 
-範例書（`public/samples/`）皆為公有領域：
+The sample books (`public/samples/`) are in the public domain:
 
-- 魯迅《吶喊》：文字取自[維基文庫](https://zh.wikisource.org/wiki/吶喊)（底本為 1948 年版《魯迅全集》），由本專案排成直排 EPUB
-- Arthur Conan Doyle《The Adventures of Sherlock Holmes》：[Standard Ebooks](https://standardebooks.org/ebooks/arthur-conan-doyle/the-adventures-of-sherlock-holmes) 製作，CC0
+- Lu Xun, *Nahan* (吶喊): text from [Wikisource](https://zh.wikisource.org/wiki/吶喊) (based on the 1948 *Complete Works of Lu Xun*), typeset as a vertical EPUB by this project
+- Arthur Conan Doyle, *The Adventures of Sherlock Holmes*: produced by [Standard Ebooks](https://standardebooks.org/ebooks/arthur-conan-doyle/the-adventures-of-sherlock-holmes), CC0
