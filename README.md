@@ -4,7 +4,7 @@
 
 A browser-only EPUB reader with first-class CJK vertical text. No server, no account, and nothing is uploaded.
 
-Demo: https://shiori-reader.miraiku82.workers.dev
+Demo: https://shiori.josh-hsu.com
 
 ![The library: books stand on a shelf with an obi band showing reading progress](docs/screenshot.png)
 

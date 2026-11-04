@@ -4,7 +4,7 @@
 
 在瀏覽器裡讀 EPUB。不需後端、不需帳號，書不會上傳。中文直排是一等公民。
 
-Demo：https://shiori-reader.miraiku82.workers.dev
+Demo：https://shiori.josh-hsu.com
 
 ![書架：書站在層板上，書腰標示讀到哪](docs/screenshot.png)
 
