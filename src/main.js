@@ -9,15 +9,16 @@ const $ = s => document.querySelector(s)
 // metadata 可能是字串、{ 語言: 字串 } 或 { name, role } 物件
 const text = x => typeof x === 'string' ? x
     : x?.name ? text(x.name) : Object.values(x ?? {})[0] ?? ''
-const formatAuthor = a => [a ?? []].flat().map(text).join(t('、'))
+// 製書工具留下的「[Creator name here]」之類佔位字不算作者
+const formatAuthor = a => [a ?? []].flat().map(text).filter(s => !/^\[.*\]$/.test(s)).join(t('、'))
 const pct = f => `${Math.round((f ?? 0) * 100)}%`
 
 let toastTimer
-const toast = msg => {
+const toast = (msg, ms = 4000) => {
     $('#toast').textContent = msg
     $('#toast').classList.add('show')
     clearTimeout(toastTimer)
-    toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 4000)
+    toastTimer = setTimeout(() => $('#toast').classList.remove('show'), ms)
 }
 
 // ---- 設定 ----
@@ -57,6 +58,9 @@ const getCSS = ({ fontSize, lineHeight, font, theme, writing }) => `
 const applySettings = () => {
     document.documentElement.dataset.theme = settings.theme
     $('#font-size-out').value = `${settings.fontSize}%`
+    // 用 aria-disabled 而不是 disabled：按到底時焦點不會被踢掉
+    for (const b of form.querySelectorAll('[data-step]'))
+        b.setAttribute('aria-disabled', +b.dataset.step < 0 ? settings.fontSize <= 70 : settings.fontSize >= 200)
     view?.renderer.setStyles?.(getCSS(settings))
     view?.renderer.setAttribute('flow', settings.flow)
 }
@@ -111,7 +115,8 @@ const fillCover = (slot, book) => {
 
 const renderLibrary = async () => {
     const books = await db.getBooks()
-    books.sort((a, b) => (b.openedAt ?? b.addedAt) - (a.openedAt ?? a.addedAt))
+    // 開過的書依最近閱讀排前面；沒開過的新書依加入時間排後面，一次匯入很多本也不會把正在讀的擠到最後
+    books.sort((a, b) => !a.openedAt - !b.openedAt || (b.openedAt ?? b.addedAt) - (a.openedAt ?? a.addedAt))
     coverURLs.forEach(URL.revokeObjectURL)
     coverURLs = []
 
@@ -119,35 +124,45 @@ const renderLibrary = async () => {
     $('#continue').hidden = !last
     if (last) {
         const c = $('#continue')
+        c.dataset.id = last.id
         fillCover(c.querySelector('.cover-slot'), last)
         c.querySelector('h2').textContent = last.title
         c.querySelector('.continue-author').textContent = last.author
         c.querySelector('.continue-where').textContent = last.chapter
             ? t('讀到「{chapter}」・{pct}', { chapter: last.chapter, pct: pct(last.fraction) })
             : t('讀到 {pct}', { pct: pct(last.fraction) })
-        c.querySelector('.meter span').style.width = pct(last.fraction)
         c.querySelector('.continue-cover').onclick = c.querySelector('.continue-go').onclick = () => openBook(last.id)
     }
 
     $('#count').textContent = books.length || ''
     $('#empty').hidden = books.length > 0
     $('#shelf-title').hidden = !books.length
-    $('#books').replaceChildren(...books.map(book => {
+    // 書架有書時，主要動作是讀書：加入書籍退成次要按鈕，朱色留給繼續閱讀
+    $('#add-btn').classList.toggle('btn-accent', !books.length)
+    $('#add-btn').classList.toggle('btn-quiet', books.length > 0)
+    $('#books').replaceChildren(...books.map((book, i) => {
         const li = $('#book-tpl').content.firstElementChild.cloneNode(true)
         const q = s => li.querySelector(s)
         fillCover(q('.cover-slot'), book)
         q('.book-title').textContent = book.title
         q('.book-author').textContent = book.author
         const done = book.fraction >= 0.995
-        q('.obi').textContent = done ? t('讀完') : book.fraction ? t('讀到 {pct}', { pct: pct(book.fraction) }) : t('未讀')
+        const state = done ? t('讀完') : book.fraction ? t('讀到 {pct}', { pct: pct(book.fraction) }) : t('未讀')
+        q('.obi').textContent = state
         q('.obi').dataset.state = done ? 'done' : book.fraction ? 'reading' : 'new'
-        q('.book-cover').setAttribute('aria-label', t('開啟《{title}》', book))
+        q('.book-cover').dataset.id = book.id
+        // aria-label 會蓋掉按鈕內的書腰文字，所以把進度一起念出來
+        q('.book-cover').setAttribute('aria-label', t('開啟《{title}》，{state}', { title: book.title, state }))
         q('.book-cover').onclick = () => openBook(book.id)
         q('.book-del').setAttribute('aria-label', t('從書架刪除《{title}》', book))
         q('.book-del').onclick = async () => {
             if (!confirm(t('確定從書架刪除《{title}》？\n閱讀進度也會一併刪除。', book))) return
             await db.deleteBook(book.id)
-            renderLibrary()
+            await renderLibrary()
+            // 焦點移到原位置的下一本（刪的是最後一本就移到前一本），鍵盤使用者不必從頁首重來
+            const covers = document.querySelectorAll('.book-cover')
+            const next = covers[i] ?? covers[i - 1] ?? $('#add-btn')
+            next.focus()
         }
         return li
     }))
@@ -158,11 +173,15 @@ const importFiles = async files => {
     const btn = $('#add-btn')
     btn.setAttribute('aria-busy', 'true')
     btn.querySelector('span').textContent = t('加入中…')
-    let added = 0
+    let added = 0, skipped = 0
+    const failed = []
     for (const file of files) {
         // ponytail: 用檔名+大小判斷重複，同一本書改名後會被當成新書
         const id = `${file.name}:${file.size}`
-        if (await db.getBook(id)) continue
+        if (await db.getBook(id)) {
+            skipped++
+            continue
+        }
         try {
             const book = await makeBook(file)
             await db.addBook({
@@ -176,14 +195,22 @@ const importFiles = async files => {
             added++
         } catch (e) {
             console.error(e)
-            toast(t('無法讀取「{name}」，可能不是有效的 EPUB 檔。', file))
+            failed.push(file.name)
         }
     }
     btn.removeAttribute('aria-busy')
     btn.querySelector('span').textContent = t('加入書籍')
-    if (added) toast(t('已加入 {n} 本書', { n: added }))
+    // 結果合成一則 toast：分開發的話，後一則會蓋掉前一則的錯誤訊息
+    const summary = [
+        added && t('已加入 {n} 本書', { n: added }),
+        skipped && t('{n} 本已在書架上', { n: skipped }),
+        failed.length && t('無法讀取：{names}（可能不是有效的 EPUB 檔）', { names: failed.join(t('、')) }),
+    ].filter(Boolean)
+    if (summary.length) toast(summary.join(t('・')), failed.length ? 8000 : 4000)
     renderLibrary()
 }
+
+$('#add-btn').onclick = () => $('#file-input').click()
 
 // 範例書放在 public/samples，抓下來當成使用者匯入的檔案；後加入的排在前面，所以《吶喊》放最後
 const samples = ['arthur-conan-doyle_the-adventures-of-sherlock-holmes.epub', 'lu-xun_nahan.epub']
@@ -232,6 +259,8 @@ addEventListener('drop', e => {
 let view, current, tocView
 
 const show = name => {
+    // 開書時多推一筆瀏覽紀錄：瀏覽器返回鍵／手機返回手勢會回到書架，而不是離開網站
+    if (name === 'reader' && $('#reader').hidden) history.pushState({ reader: true }, '')
     $('#library').hidden = name !== 'library'
     $('#reader').hidden = name !== 'reader'
     if (name === 'library') document.title = t('書架')
@@ -243,6 +272,11 @@ const turn = dir => {
     setChrome(false)
     dir < 0 ? view?.goLeft() : view?.goRight()
 }
+// 依閱讀順序翻頁（直排書的下一頁在左邊）；turn 是依畫面左右
+const page = dir => {
+    setChrome(false)
+    dir < 0 ? view?.prev() : view?.next()
+}
 
 const closeBook = () => {
     view?.close()
@@ -253,16 +287,37 @@ const closeBook = () => {
 
 const onRelocate = ({ detail: { fraction, cfi, tocItem } }) => {
     $('#progress').value = fraction
+    $('#progress').setAttribute('aria-valuetext', pct(fraction))
     $('#percent').textContent = pct(fraction)
     $('#chapter').textContent = tocItem?.label ?? ''
     if (tocItem?.href) tocView?.setCurrentHref(tocItem.href)
     if (current) db.saveProgress({ id: current.id, cfi, fraction, chapter: tocItem?.label, openedAt: Date.now() })
 }
 
+const keys = {
+    ArrowLeft: () => turn(-1),
+    ArrowRight: () => turn(1),
+    PageDown: () => page(1),
+    PageUp: () => page(-1),
+    Escape: toggleChrome,
+}
 const onKey = e => {
-    if (e.target.closest?.('input, select, [popover]')) return
-    if (e.key === 'ArrowLeft') turn(-1)
-    else if (e.key === 'ArrowRight') turn(1)
+    // 面板開著時按鍵留給面板（Esc 關面板，不要順便收工具列）
+    if ($('#reader').hidden || $('#reader :popover-open') || e.target.closest?.('input, select')
+        || e.metaKey || e.ctrlKey || e.altKey) return
+    // 工具列收起時按 Tab 先叫出來，焦點才有地方去（不擋預設，焦點照常前進）
+    if (e.key === 'Tab') return setChrome(true)
+    // 空白鍵翻頁；焦點在按鈕上時留給按鈕自己
+    const key = e.key === ' ' && !e.target.closest?.('button, a') ? (e.shiftKey ? 'PageUp' : 'PageDown') : e.key
+    if (!keys[key]) return
+    e.preventDefault()
+    keys[key]()
+}
+
+// 捲動模式下使用者自己捲（滾輪、手指拖）就收起工具列；iframe 裡的事件不會冒到外層，內外都要聽
+// 不用 foliate 的 relocate：錨定後的第一次捲動它不會發。分頁模式不收，輕點的手指微動也算 touchmove
+const onUserScroll = () => {
+    if (settings.flow === 'scrolled') setChrome(false)
 }
 
 // 書本內容在 iframe 裡：點左右三成翻頁、點中間叫出工具列
@@ -285,6 +340,8 @@ const openBook = async (id, cfi) => {
         $('#chapter').textContent = ''
         setChrome(true)
         show('reader')
+        // 焦點移到書名，螢幕閱讀器會念出開了哪本書；原本的封面按鈕已經隱藏
+        $('#book-title').focus()
 
         const book = await makeBook(file)
         // 強制直/橫排時，翻頁方向要跟著換（直排由右往左翻）
@@ -297,7 +354,11 @@ const openBook = async (id, cfi) => {
         view.addEventListener('load', ({ detail: { doc } }) => {
             doc.addEventListener('keydown', onKey)
             doc.addEventListener('click', onDocClick(doc))
+            doc.addEventListener('wheel', onUserScroll, { passive: true })
+            doc.addEventListener('touchmove', onUserScroll, { passive: true })
         })
+        view.addEventListener('wheel', onUserScroll, { passive: true })
+        view.addEventListener('touchmove', onUserScroll, { passive: true })
         view.renderer.setAttribute('margin', '64px')
         view.renderer.setAttribute('gap', '6%')
         applySettings()
@@ -310,25 +371,49 @@ const openBook = async (id, cfi) => {
         $('#toc-list').replaceChildren(tocView?.element
             ?? Object.assign(document.createElement('p'), { className: 'toc-empty', textContent: t('這本書沒有目次。') }))
         $('#progress').dir = view.book.dir ?? 'ltr'
+        // 左右兩顆鈕是畫面方向；直排（rtl）書往左才是下一頁
+        const rtl = view.book.dir === 'rtl'
+        $('#prev').setAttribute('aria-label', t(rtl ? '下一頁' : '上一頁'))
+        $('#next').setAttribute('aria-label', t(rtl ? '上一頁' : '下一頁'))
 
         await view.init({ lastLocation: cfi ?? progress?.cfi, showTextStart: true })
         $('#viewer .viewer-loading')?.remove()
     } catch (e) {
         console.error(e)
-        closeBook()
-        show('library')
+        exitReader()
         toast(t('無法打開這本書，檔案可能已損壞。'))
     }
 }
+
+const leaveReader = async () => {
+    const id = current?.id
+    for (const p of document.querySelectorAll('#reader :popover-open')) p.hidePopover()
+    closeBook()
+    show('library')
+    await renderLibrary()
+    // 焦點回到剛讀的那本：還沒讀完就是「繼續閱讀」，讀完的在書架上
+    const c = $('#continue')
+    const target = !c.hidden && c.dataset.id === id ? $('.continue-go')
+        : [...document.querySelectorAll('.book-cover')].find(b => b.dataset.id === id)
+    target?.focus()
+}
+// 「回書架」也走瀏覽紀錄，返回鍵和畫面按鈕才會是同一件事、紀錄不會多一筆
+const exitReader = () => history.state?.reader ? history.back() : leaveReader()
+addEventListener('popstate', () => {
+    if (!$('#reader').hidden) leaveReader()
+})
+// 重新整理後書架是初始畫面，清掉留下來的閱讀頁紀錄
+if (history.state?.reader) history.replaceState(null, '')
 
 document.addEventListener('keydown', onKey)
 $('#prev').onclick = () => turn(-1)
 $('#next').onclick = () => turn(1)
 $('#progress').oninput = e => view?.goToFraction(+e.target.value)
-$('#back').onclick = () => {
-    closeBook()
-    show('library')
-    renderLibrary()
+$('#back').onclick = exitReader
+// 栞：工具列收起時唯一看得到的入口，點它叫回整個工具列
+$('#shiori').onclick = () => {
+    setChrome(true)
+    $('#toc-btn').focus()
 }
 // 目次打開時，把目前章節捲進可視範圍
 $('#toc').addEventListener('toggle', e => {

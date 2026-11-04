@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-04T03:34:21.398Z",
+        "reason": "Claude (2026-11-04 critique): static scan of index.html does not load style.css (imported from main.js), so h1/h2 read as browser-default 16px; rendered h1 is 28px and URL scan + overlay were clean"
+      }
+    ]
+  }
+}

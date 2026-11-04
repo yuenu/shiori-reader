@@ -33,11 +33,11 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <main id="library">
         <header class="lib-head">
             <h1>書架</h1>
-            <label class="btn btn-accent" id="add-btn">
+            <button type="button" class="btn btn-accent" id="add-btn">
                 <svg class="icon"><use href="#i-plus"/></svg>
                 <span>加入書籍</span>
-                <input id="file-input" type="file" accept=".epub,application/epub+zip" multiple hidden>
-            </label>
+            </button>
+            <input id="file-input" type="file" accept=".epub,application/epub+zip" multiple hidden>
         </header>
 
         <section id="continue" hidden aria-labelledby="continue-title">
@@ -49,7 +49,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                 <h2 id="continue-title"></h2>
                 <p class="continue-author"></p>
                 <p class="continue-where"></p>
-                <div class="meter" aria-hidden="true"><span></span></div>
                 <button class="btn btn-accent continue-go">繼續閱讀</button>
             </div>
         </section>
@@ -60,7 +59,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             <div id="empty" class="empty" hidden>
                 <div class="empty-shelf" aria-hidden="true"><i></i><i></i><i></i></div>
                 <p class="empty-lead">書架還是空的</p>
-                <p>按右上角「加入書籍」，或直接把 .epub 檔拖進這個視窗。<br>書只存在這台裝置的瀏覽器裡，不會上傳。</p>
+                <p><span class="hint-drag">按右上角「加入書籍」，或直接把 .epub 檔拖進這個視窗。</span><span class="hint-tap">按右上角「加入書籍」選擇 .epub 檔。</span><br>書只存在這台裝置的瀏覽器裡，不會上傳。</p>
                 <button id="samples-btn" class="btn btn-quiet empty-action">載入範例書</button>
             </div>
         </section>
@@ -83,22 +82,22 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <main id="reader" hidden>
         <div id="viewer"><p class="viewer-loading">正在打開…</p></div>
 
-        <button id="shiori" class="shiori" popovertarget="toc" aria-label="目次"></button>
+        <button id="shiori" class="shiori" aria-label="顯示工具列"></button>
 
         <header class="chrome chrome-top">
             <button id="back" class="icon-btn" aria-label="回書架"><svg class="icon"><use href="#i-back"/></svg></button>
-            <h1 id="book-title"></h1>
-            <button class="icon-btn" popovertarget="toc" aria-label="目次"><svg class="icon"><use href="#i-list"/></svg></button>
+            <h1 id="book-title" tabindex="-1"></h1>
+            <button id="toc-btn" class="icon-btn" popovertarget="toc" aria-label="目次"><svg class="icon"><use href="#i-list"/></svg></button>
             <button class="icon-btn" popovertarget="settings" aria-label="排版設定"><svg class="icon"><use href="#i-type"/></svg></button>
         </header>
 
         <footer class="chrome chrome-bottom">
-            <button id="prev" class="icon-btn" aria-label="向左翻頁"><svg class="icon"><use href="#i-back"/></svg></button>
+            <button id="prev" class="icon-btn" aria-label="上一頁"><svg class="icon"><use href="#i-back"/></svg></button>
             <div class="where">
                 <div class="where-row"><span id="chapter"></span><span id="percent">0%</span></div>
                 <input id="progress" type="range" min="0" max="1" step="any" value="0" aria-label="閱讀進度">
             </div>
-            <button id="next" class="icon-btn" aria-label="向右翻頁"><svg class="icon"><use href="#i-next"/></svg></button>
+            <button id="next" class="icon-btn" aria-label="下一頁"><svg class="icon"><use href="#i-next"/></svg></button>
         </footer>
 
         <!-- popover 的 ::backdrop 不攔點擊，點擊會穿進書本 iframe；用一層真的遮罩接住，觸發原生的 light dismiss -->
@@ -118,6 +117,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                 <button type="button" class="icon-btn" popovertarget="settings" popovertargetaction="hide" aria-label="關閉排版設定"><svg class="icon"><use href="#i-close"/></svg></button>
             </header>
 
+            <!-- 分兩組：文字本身（字級／行距／字體）與版面（底色／方向／翻頁） -->
+            <div class="field-group">
             <div class="field">
                 <span class="field-label">字級</span>
                 <div class="stepper">
@@ -144,6 +145,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                     <label><input type="radio" name="font" value="sans"><span class="f-sans">黑體</span></label>
                 </div>
             </fieldset>
+            </div>
+
+            <div class="field-group">
 
             <fieldset class="field">
                 <legend class="field-label">底色</legend>
@@ -170,6 +174,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                     <label><input type="radio" name="flow" value="scrolled"><span>捲動</span></label>
                 </div>
             </fieldset>
+            </div>
         </form>
     </main>
 
