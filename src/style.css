@@ -184,6 +184,31 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .continue-author { margin: 0; color: var(--ink-2); }
 .continue-where { margin: 18px 0 24px; font-size: 14px; color: var(--ink-2); }
+/* 繼續閱讀鈕本身就是一段橫放的栞：右端燕尾缺口。朱底畫在 ::before，clip-path 才不會連焦點框一起剪掉 */
+.continue-go {
+    position: relative;
+    isolation: isolate;
+    height: 46px;
+    padding: 0 32px 0 22px;
+    gap: 10px;
+    background: none;
+    color: var(--accent-ink);
+    font-size: 16px;
+    letter-spacing: .06em;
+}
+.continue-go::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 6px 0 0 6px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 11px) 50%, 100% 100%, 0 100%);
+    transition: background-color 150ms var(--ease);
+}
+.continue-go:hover::before { background: color-mix(in srgb, var(--accent) 86%, black); }
+.continue-go .icon { transition: transform 200ms var(--ease); }
+.continue-go:hover .icon { transform: translateX(3px); }
 
 .shelf-section { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .shelf-title {
