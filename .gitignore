@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.DS_Store
+
+# 本機工具設定
+.codex/
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/questions/

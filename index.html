@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <!-- 書本 iframe 必須 allow-scripts + allow-same-origin（foliate-js 限制），靠 CSP 擋掉 EPUB 內的 JS -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'">
+    <title>書架</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='3' width='20' height='26' rx='2' fill='%231c1c1e'/%3E%3Cpath d='M19 3h4v14l-2-2-2 2z' fill='%23d9472b'/%3E%3C/svg%3E">
+    <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+<!--
+THESIS: 每本書是一冊文庫本：站在書架上、繫著書腰，正在讀的那本垂著一條栞。拒絕後台式的檔案網格書庫，也拒絕常駐工具列的閱讀頁。
+OWN-WORLD: 中性淺灰書架地、白紙閱讀面、墨黑字；朱色只給栞、書腰進度與主要動作。書名用明體、介面用黑體；書封 105:148 站在帶陰影的層板上。
+STORY: 打開就看到上次讀的書和「繼續閱讀」；進入後只剩文字，輕點中央或拉栞才出現工具。
+FIRST VIEWPORT: 上方「繼續閱讀」：大書封垂栞、書名、讀到哪一章、朱色按鈕；下方整排書架，主要動作「加入書籍」在右上。
+FORM: 文庫本與栞，排序第 1（IMPECCABLE’S PICK），seed 56eb640f。
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+            <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+            <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+            <symbol id="i-type" viewBox="0 0 24 24"><path d="M3 18l5-12 5 12M4.8 14h6.4M15 18v-6.5a2.5 2.5 0 015 0V18M15 15h5"/></symbol>
+            <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+            <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+            <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></symbol>
+        </defs>
+    </svg>
+
+    <main id="library">
+        <header class="lib-head">
+            <h1>書架</h1>
+            <label class="btn btn-accent" id="add-btn">
+                <svg class="icon"><use href="#i-plus"/></svg>
+                <span>加入書籍</span>
+                <input id="file-input" type="file" accept=".epub,application/epub+zip" multiple hidden>
+            </label>
+        </header>
+
+        <section id="continue" hidden aria-labelledby="continue-title">
+            <button class="continue-cover" aria-label="繼續閱讀">
+                <span class="cover-slot"></span>
+                <span class="shiori-tail" aria-hidden="true"></span>
+            </button>
+            <div class="continue-body">
+                <h2 id="continue-title"></h2>
+                <p class="continue-author"></p>
+                <p class="continue-where"></p>
+                <div class="meter" aria-hidden="true"><span></span></div>
+                <button class="btn btn-accent continue-go">繼續閱讀</button>
+            </div>
+        </section>
+
+        <section class="shelf-section" aria-labelledby="shelf-title">
+            <h2 id="shelf-title" class="shelf-title">全部書籍 <span id="count"></span></h2>
+            <ul id="books" class="shelf"></ul>
+            <div id="empty" class="empty" hidden>
+                <div class="empty-shelf" aria-hidden="true"><i></i><i></i><i></i></div>
+                <p class="empty-lead">書架還是空的</p>
+                <p>按右上角「加入書籍」，或直接把 .epub 檔拖進這個視窗。<br>書只存在這台裝置的瀏覽器裡，不會上傳。</p>
+            </div>
+        </section>
+
+        <template id="book-tpl">
+            <li class="book">
+                <button class="book-cover">
+                    <span class="cover-slot"></span>
+                    <span class="obi"></span>
+                </button>
+                <div class="book-title"></div>
+                <div class="book-meta">
+                    <span class="book-author"></span>
+                    <button class="book-del" aria-label="刪除"><svg class="icon"><use href="#i-trash"/></svg></button>
+                </div>
+            </li>
+        </template>
+    </main>
+
+    <main id="reader" hidden>
+        <div id="viewer"><p class="viewer-loading">正在打開…</p></div>
+
+        <button id="shiori" class="shiori" popovertarget="toc" aria-label="目次"></button>
+
+        <header class="chrome chrome-top">
+            <button id="back" class="icon-btn" aria-label="回書架"><svg class="icon"><use href="#i-back"/></svg></button>
+            <h1 id="book-title"></h1>
+            <button class="icon-btn" popovertarget="toc" aria-label="目次"><svg class="icon"><use href="#i-list"/></svg></button>
+            <button class="icon-btn" popovertarget="settings" aria-label="排版設定"><svg class="icon"><use href="#i-type"/></svg></button>
+        </header>
+
+        <footer class="chrome chrome-bottom">
+            <button id="prev" class="icon-btn" aria-label="向左翻頁"><svg class="icon"><use href="#i-back"/></svg></button>
+            <div class="where">
+                <div class="where-row"><span id="chapter"></span><span id="percent">0%</span></div>
+                <input id="progress" type="range" min="0" max="1" step="any" value="0" aria-label="閱讀進度">
+            </div>
+            <button id="next" class="icon-btn" aria-label="向右翻頁"><svg class="icon"><use href="#i-next"/></svg></button>
+        </footer>
+
+        <!-- popover 的 ::backdrop 不攔點擊，點擊會穿進書本 iframe；用一層真的遮罩接住，觸發原生的 light dismiss -->
+        <div id="scrim" aria-hidden="true"></div>
+
+        <aside id="toc" popover aria-labelledby="toc-heading">
+            <header class="panel-head">
+                <h2 id="toc-heading">目次</h2>
+                <button class="icon-btn" popovertarget="toc" popovertargetaction="hide" aria-label="關閉目次"><svg class="icon"><use href="#i-close"/></svg></button>
+            </header>
+            <nav id="toc-list"></nav>
+        </aside>
+
+        <form id="settings" popover aria-labelledby="settings-heading">
+            <header class="panel-head">
+                <h2 id="settings-heading">排版</h2>
+                <button type="button" class="icon-btn" popovertarget="settings" popovertargetaction="hide" aria-label="關閉排版設定"><svg class="icon"><use href="#i-close"/></svg></button>
+            </header>
+
+            <div class="field">
+                <span class="field-label">字級</span>
+                <div class="stepper">
+                    <button type="button" data-step="-10" aria-label="縮小字級"><span style="font-size:13px">A</span></button>
+                    <output id="font-size-out">100%</output>
+                    <button type="button" data-step="10" aria-label="放大字級"><span style="font-size:19px">A</span></button>
+                </div>
+            </div>
+
+            <fieldset class="field">
+                <legend class="field-label">行距</legend>
+                <div class="seg">
+                    <label><input type="radio" name="lineHeight" value="1.4"><span>緊</span></label>
+                    <label><input type="radio" name="lineHeight" value="1.7"><span>適中</span></label>
+                    <label><input type="radio" name="lineHeight" value="2"><span>寬</span></label>
+                </div>
+            </fieldset>
+
+            <fieldset class="field">
+                <legend class="field-label">字體</legend>
+                <div class="seg">
+                    <label><input type="radio" name="font" value=""><span>原書</span></label>
+                    <label><input type="radio" name="font" value="serif"><span class="f-serif">明體</span></label>
+                    <label><input type="radio" name="font" value="sans"><span class="f-sans">黑體</span></label>
+                </div>
+            </fieldset>
+
+            <fieldset class="field">
+                <legend class="field-label">底色</legend>
+                <div class="seg seg-swatch">
+                    <label><input type="radio" name="theme" value="light"><span class="sw sw-light">白紙</span></label>
+                    <label><input type="radio" name="theme" value="sepia"><span class="sw sw-sepia">書皮</span></label>
+                    <label><input type="radio" name="theme" value="dark"><span class="sw sw-dark">夜讀</span></label>
+                </div>
+            </fieldset>
+
+            <fieldset class="field">
+                <legend class="field-label">方向</legend>
+                <div class="seg">
+                    <label><input type="radio" name="writing" value=""><span>原書</span></label>
+                    <label><input type="radio" name="writing" value="horizontal-tb"><span>橫排</span></label>
+                    <label><input type="radio" name="writing" value="vertical-rl"><span>直排</span></label>
+                </div>
+            </fieldset>
+
+            <fieldset class="field">
+                <legend class="field-label">翻頁</legend>
+                <div class="seg">
+                    <label><input type="radio" name="flow" value="paginated"><span>分頁</span></label>
+                    <label><input type="radio" name="flow" value="scrolled"><span>捲動</span></label>
+                </div>
+            </fieldset>
+        </form>
+    </main>
+
+    <div id="drop-hint" aria-hidden="true"><p>放開以加入書架</p></div>
+    <p id="toast" role="status" aria-live="polite"></p>
+</body>
+</html>

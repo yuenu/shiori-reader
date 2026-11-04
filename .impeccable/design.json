@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-03T11:20:00+08:00",
+  "title": "Design System: 書架（EPUB 閱讀器）",
+  "extensions": {
+    "colorMeta": {
+      "shu": { "role": "primary", "displayName": "朱", "tonalRamp": ["#e8664a", "#c63d22", "#ad3c1c"] },
+      "ground": { "role": "neutral", "displayName": "書架地" },
+      "paper": { "role": "neutral", "displayName": "紙" },
+      "ink": { "role": "neutral", "displayName": "墨" }
+    },
+    "typographyMeta": {
+      "shelf-heading": { "displayName": "書架標題", "purpose": "頁面標題，只有一個。" },
+      "feature-title": { "displayName": "繼續閱讀書名", "purpose": "繼續閱讀帶的書名。" },
+      "book-title": { "displayName": "書名", "purpose": "書架上的書名，最多兩行。" },
+      "obi": { "displayName": "書腰", "purpose": "書腰上的進度文字。" }
+    },
+    "shadows": [
+      { "name": "cover", "value": "0 1px 2px rgba(0,0,0,.14), 0 8px 16px -8px rgba(0,0,0,.35)", "purpose": "書封站在層板上。" },
+      { "name": "cover-lifted", "value": "0 1px 2px rgba(0,0,0,.14), 0 18px 24px -14px rgba(0,0,0,.45)", "purpose": "滑過時書往上抽。" },
+      { "name": "shelf", "value": "0 8px 12px -6px rgba(60,45,30,.22)", "purpose": "層板下緣。" },
+      { "name": "panel", "value": "0 16px 48px -16px rgba(0,0,0,.35)", "purpose": "排版面板與目次抽屜。" }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(.2,.7,.2,1)", "purpose": "所有狀態轉換的 ease-out。" },
+      { "name": "state", "value": "150ms", "purpose": "hover、選中。" },
+      { "name": "lift", "value": "220ms", "purpose": "書從層板抽起。" },
+      { "name": "chrome", "value": "240ms", "purpose": "工具列收放、栞收進去。" },
+      { "name": "drawer", "value": "260ms", "purpose": "目次抽屜與遮罩。" },
+      { "name": "sway", "value": "1100ms", "purpose": "繼續閱讀的栞擺動，唯一的編排動畫。" }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "主要動作：加入書籍、繼續閱讀。",
+      "html": "<button class=\"ds-btn\">繼續閱讀</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 18px;border:0;border-radius:6px;background:#c63d22;color:#fff;font:600 15px system-ui,-apple-system,'PingFang TC',sans-serif;cursor:pointer;transition:background-color 150ms cubic-bezier(.2,.7,.2,1)}.ds-btn:hover{background:color-mix(in srgb,#c63d22 86%,black)}.ds-btn:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Segmented Option",
+      "kind": "input",
+      "refersTo": "segmented",
+      "description": "排版設定的分段選項，所有選擇攤開可見。",
+      "html": "<div class=\"ds-seg\"><label><input type=\"radio\" name=\"x\"><span>緊</span></label><label><input type=\"radio\" name=\"x\" checked><span>適中</span></label><label><input type=\"radio\" name=\"x\"><span>寬</span></label></div>",
+      "css": ".ds-seg{display:flex;gap:2px;padding:3px;border-radius:8px;background:#f4f4f2;font:14px system-ui,'PingFang TC',sans-serif}.ds-seg label{position:relative;flex:1}.ds-seg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}.ds-seg span{display:grid;place-items:center;height:34px;border-radius:6px;color:#5f5f64}.ds-seg input:checked+span{background:#fff;color:#1c1c1e;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.14)}"
+    },
+    {
+      "name": "Book on Shelf",
+      "kind": "custom",
+      "refersTo": "obi-reading",
+      "description": "文庫本比例的書封站在層板上，下緣繫書腰。",
+      "html": "<div class=\"ds-book\"><div class=\"ds-cover\"></div><span class=\"ds-obi\">讀到 45%</span></div>",
+      "css": ".ds-book{position:relative;width:128px;aspect-ratio:105/148}.ds-book::after{content:'';position:absolute;left:-14px;right:-14px;bottom:-10px;height:10px;background:#d8d4cc;box-shadow:0 8px 12px -6px rgba(60,45,30,.22)}.ds-cover{position:absolute;inset:0;border-radius:1px 3px 3px 1px;background:#24384f;box-shadow:0 1px 2px rgba(0,0,0,.14),0 8px 16px -8px rgba(0,0,0,.35)}.ds-obi{position:absolute;left:0;right:0;bottom:0;height:17%;display:grid;place-items:center;background:#c63d22;color:#fff;font:700 12px system-ui,sans-serif;letter-spacing:.1em}"
+    }
+  ],
+  "narrative": {
+    "northStar": "文庫本與栞",
+    "overview": "書庫是一面書架，書以文庫本比例站在層板上、繫著書腰；正在讀的那本垂著朱色的栞。閱讀頁只剩文字，工具列需要時才出現。",
+    "keyCharacteristics": ["中性淺灰書架地＋一點朱", "書名明體、介面黑體", "書腰是唯一的進度表示", "栞是收起狀態下唯一的入口"],
+    "rules": [
+      { "name": "一點朱", "body": "朱色只標記進度與主要動作。", "section": "colors" },
+      { "name": "書名用明體，按鈕用黑體", "body": "明體只給書名與面板標題。", "section": "typography" },
+      { "name": "不假造質感", "body": "書封是平面印刷色，不用 CSS 模擬布紋或折痕。", "section": "elevation" }
+    ],
+    "dos": ["讓閱讀頁回到只剩文字", "沿用書腰、栞、層板的語彙", "iframe 上的浮層用真的遮罩接點擊"],
+    "donts": ["不要做成檔案列表或卡片網格", "不要假造紙紋布紋木紋", "不要放 kicker 或用字元充當圖示"]
+  }
+}
