@@ -34,17 +34,6 @@ npm run dev
 
 `npm run build` 輸出到 `dist/`，是純靜態檔案，任何靜態主機都能放。
 
-## 部署到 Cloudflare
-
-repo 內附 `wrangler.jsonc`（Workers 靜態資源）。在 Cloudflare dashboard 匯入這個 repo：
-
-- Build command：`npm run build`
-- Deploy command：`npx wrangler deploy`
-
-或在本機手動部署：`npm run build && npx wrangler deploy`。
-
-> `index.html` 的 CSP（`script-src 'self'`）是用來擋 EPUB 內嵌的 JavaScript，不要移除。也因此 Cloudflare Web Analytics、Rocket Loader 這類會注入腳本的功能會被擋下；要用的話，得把對應來源加進 CSP。
-
 ## 授權
 
 [MIT](LICENSE)
