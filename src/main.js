@@ -1,6 +1,7 @@
 import { makeBook } from 'foliate-js/view.js'
 import { createTOCView } from 'foliate-js/ui/tree.js'
 import * as db from './db.js'
+import { t } from './i18n.js'
 import './style.css'
 
 const $ = s => document.querySelector(s)
@@ -8,7 +9,7 @@ const $ = s => document.querySelector(s)
 // metadata 可能是字串、{ 語言: 字串 } 或 { name, role } 物件
 const text = x => typeof x === 'string' ? x
     : x?.name ? text(x.name) : Object.values(x ?? {})[0] ?? ''
-const formatAuthor = a => [a ?? []].flat().map(text).join('、')
+const formatAuthor = a => [a ?? []].flat().map(text).join(t('、'))
 const pct = f => `${Math.round((f ?? 0) * 100)}%`
 
 let toastTimer
@@ -121,8 +122,9 @@ const renderLibrary = async () => {
         fillCover(c.querySelector('.cover-slot'), last)
         c.querySelector('h2').textContent = last.title
         c.querySelector('.continue-author').textContent = last.author
-        c.querySelector('.continue-where').textContent =
-            `讀到${last.chapter ? `「${last.chapter}」・` : ''}${pct(last.fraction)}`
+        c.querySelector('.continue-where').textContent = last.chapter
+            ? t('讀到「{chapter}」・{pct}', { chapter: last.chapter, pct: pct(last.fraction) })
+            : t('讀到 {pct}', { pct: pct(last.fraction) })
         c.querySelector('.meter span').style.width = pct(last.fraction)
         c.querySelector('.continue-cover').onclick = c.querySelector('.continue-go').onclick = () => openBook(last.id)
     }
@@ -137,13 +139,13 @@ const renderLibrary = async () => {
         q('.book-title').textContent = book.title
         q('.book-author').textContent = book.author
         const done = book.fraction >= 0.995
-        q('.obi').textContent = done ? '讀完' : book.fraction ? `讀到 ${pct(book.fraction)}` : '未讀'
+        q('.obi').textContent = done ? t('讀完') : book.fraction ? t('讀到 {pct}', { pct: pct(book.fraction) }) : t('未讀')
         q('.obi').dataset.state = done ? 'done' : book.fraction ? 'reading' : 'new'
-        q('.book-cover').setAttribute('aria-label', `開啟《${book.title}》`)
+        q('.book-cover').setAttribute('aria-label', t('開啟《{title}》', book))
         q('.book-cover').onclick = () => openBook(book.id)
-        q('.book-del').setAttribute('aria-label', `從書架刪除《${book.title}》`)
+        q('.book-del').setAttribute('aria-label', t('從書架刪除《{title}》', book))
         q('.book-del').onclick = async () => {
-            if (!confirm(`確定從書架刪除《${book.title}》？\n閱讀進度也會一併刪除。`)) return
+            if (!confirm(t('確定從書架刪除《{title}》？\n閱讀進度也會一併刪除。', book))) return
             await db.deleteBook(book.id)
             renderLibrary()
         }
@@ -155,7 +157,7 @@ const importFiles = async files => {
     if (!files.length) return
     const btn = $('#add-btn')
     btn.setAttribute('aria-busy', 'true')
-    btn.querySelector('span').textContent = '加入中…'
+    btn.querySelector('span').textContent = t('加入中…')
     let added = 0
     for (const file of files) {
         // ponytail: 用檔名+大小判斷重複，同一本書改名後會被當成新書
@@ -174,12 +176,12 @@ const importFiles = async files => {
             added++
         } catch (e) {
             console.error(e)
-            toast(`無法讀取「${file.name}」，可能不是有效的 EPUB 檔。`)
+            toast(t('無法讀取「{name}」，可能不是有效的 EPUB 檔。', file))
         }
     }
     btn.removeAttribute('aria-busy')
-    btn.querySelector('span').textContent = '加入書籍'
-    if (added) toast(`已加入 ${added} 本書`)
+    btn.querySelector('span').textContent = t('加入書籍')
+    if (added) toast(t('已加入 {n} 本書', { n: added }))
     renderLibrary()
 }
 
@@ -203,7 +205,7 @@ addEventListener('drop', e => {
     document.body.classList.remove('dragging')
     const files = [...e.dataTransfer.files]
     const epubs = files.filter(f => f.name.toLowerCase().endsWith('.epub'))
-    if (files.length && !epubs.length) toast('只支援 .epub 檔')
+    if (files.length && !epubs.length) toast(t('只支援 .epub 檔'))
     importFiles(epubs)
 })
 
@@ -214,7 +216,7 @@ let view, current, tocView
 const show = name => {
     $('#library').hidden = name !== 'library'
     $('#reader').hidden = name !== 'reader'
-    if (name === 'library') document.title = '書架'
+    if (name === 'library') document.title = t('書架')
 }
 
 const setChrome = visible => $('#reader').classList.toggle('chrome-hidden', !visible)
@@ -260,7 +262,7 @@ const openBook = async (id, cfi) => {
         closeBook()
         current = meta
         $('#viewer').replaceChildren(Object.assign(document.createElement('p'), {
-            className: 'viewer-loading', textContent: '正在打開…' }))
+            className: 'viewer-loading', textContent: t('正在打開…') }))
         $('#book-title').textContent = document.title = meta.title
         $('#chapter').textContent = ''
         setChrome(true)
@@ -288,7 +290,7 @@ const openBook = async (id, cfi) => {
             setChrome(false)
         }) : null
         $('#toc-list').replaceChildren(tocView?.element
-            ?? Object.assign(document.createElement('p'), { className: 'toc-empty', textContent: '這本書沒有目次。' }))
+            ?? Object.assign(document.createElement('p'), { className: 'toc-empty', textContent: t('這本書沒有目次。') }))
         $('#progress').dir = view.book.dir ?? 'ltr'
 
         await view.init({ lastLocation: cfi ?? progress?.cfi, showTextStart: true })
@@ -297,7 +299,7 @@ const openBook = async (id, cfi) => {
         console.error(e)
         closeBook()
         show('library')
-        toast('無法打開這本書，檔案可能已損壞。')
+        toast(t('無法打開這本書，檔案可能已損壞。'))
     }
 }
 

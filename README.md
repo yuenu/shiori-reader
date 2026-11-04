@@ -13,6 +13,7 @@ A browser-only EPUB reader with first-class CJK vertical text. No server, no acc
 - 翻頁：按鈕、方向鍵、點畫面左右兩側、觸控滑動
 - 排版：字級、行距、字體（原書／明體／黑體）、底色（白紙／書皮／夜讀）、直排／橫排、分頁／捲動
 - 目次
+- 介面語言：繁體中文、英文，依瀏覽器語言自動切換；網址加 `?lang=en` 或 `?lang=zh` 可指定
 
 尚未支援：書籤、劃線筆記、全文搜尋、離線使用。
 
