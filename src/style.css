@@ -11,6 +11,11 @@
     --accent: #c63d22;
     --accent-ink: #ffffff;
     --cover-shadow: 0 1px 2px rgba(0, 0, 0, .14), 0 8px 16px -8px rgba(0, 0, 0, .35);
+    /* 書腰：未讀是米白紙、讀完是墨黑 */
+    --obi: #fbfaf7;
+    --obi-ink: #1c1c1e;
+    --obi-done: #1c1c1e;
+    --obi-done-ink: #f4f4f2;
 
     --sans: system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     --serif: "Songti TC", "Noto Serif TC", "Source Han Serif TC", "Noto Serif CJK TC", "PMingLiU", serif;
@@ -41,6 +46,10 @@
     --accent: #e8664a;
     --accent-ink: #1b1b1b;
     --cover-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 16px -8px rgba(0, 0, 0, .8);
+    /* 夜讀：米白書腰壓暗免得刺眼；讀完的墨黑會融進地色，改用炭灰 */
+    --obi: #cfccc5;
+    --obi-done: #3b3b3d;
+    --obi-done-ink: #e4e2de;
     color-scheme: dark;
 }
 
@@ -86,6 +95,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .btn:active { transform: translateY(1px); }
 .btn-accent { background: var(--accent); color: var(--accent-ink); }
 .btn-accent:hover { background: color-mix(in srgb, var(--accent) 86%, black); }
+.btn-quiet { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.btn-quiet:hover { box-shadow: inset 0 0 0 1px var(--ink-2); }
 .btn[aria-busy="true"] { opacity: .7; cursor: progress; pointer-events: none; }
 .btn .icon { width: 18px; height: 18px; stroke-width: 2; }
 
@@ -122,6 +133,7 @@ button { -webkit-tap-highlight-color: transparent; }
     font: 700 28px/1.2 var(--serif);
     letter-spacing: .04em;
 }
+.lib-actions { display: flex; align-items: center; gap: 8px; }
 
 /* 繼續閱讀：整條紙色帶，不是卡片 */
 #continue {
@@ -171,16 +183,7 @@ button { -webkit-tap-highlight-color: transparent; }
     text-wrap: balance;
 }
 .continue-author { margin: 0; color: var(--ink-2); }
-.continue-where { margin: 18px 0 8px; font-size: 14px; color: var(--ink-2); }
-.meter {
-    max-width: 320px;
-    height: 3px;
-    margin-bottom: 22px;
-    border-radius: 2px;
-    background: var(--line);
-    overflow: hidden;
-}
-.meter span { display: block; height: 100%; background: var(--accent); }
+.continue-where { margin: 18px 0 24px; font-size: 14px; color: var(--ink-2); }
 
 .shelf-section { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .shelf-title {
@@ -253,13 +256,13 @@ button { -webkit-tap-highlight-color: transparent; }
     font-weight: 700;
     letter-spacing: .1em;
     font-variant-numeric: tabular-nums;
-    background: #fbfaf7;
-    color: #1c1c1e;
+    background: var(--obi);
+    color: var(--obi-ink);
     box-shadow: 0 -1px 0 rgba(0, 0, 0, .08), 0 -4px 8px -4px rgba(0, 0, 0, .2);
     border-radius: 0 0 3px 1px;
 }
 .obi[data-state="reading"] { background: var(--accent); color: var(--accent-ink); }
-.obi[data-state="done"] { background: #1c1c1e; color: #f4f4f2; }
+.obi[data-state="done"] { background: var(--obi-done); color: var(--obi-done-ink); }
 
 .book-title {
     margin-top: 24px;
@@ -293,13 +296,14 @@ button { -webkit-tap-highlight-color: transparent; }
     border: 0;
     border-radius: 6px;
     background: none;
+    /* 不再降透明度：疊了 .7 在書皮底色上只剩 2.8:1，圖示至少要 3:1 */
     color: var(--ink-2);
     cursor: pointer;
-    opacity: .7;
-    transition: opacity 150ms, color 150ms, background-color 150ms;
+    transition: color 150ms, background-color 150ms;
 }
 .book-del .icon { width: 16px; height: 16px; }
-.book-del:hover { opacity: 1; color: var(--accent); background: var(--hover); }
+/* 朱色只代表進度與主要動作，刪除不用朱 */
+.book-del:hover { color: var(--ink); background: var(--hover); }
 
 /* 沒有封面時自動產生的文庫本封面 */
 .gen-cover {
@@ -314,10 +318,16 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .gen-title {
     align-self: flex-start;
+    /* 直排的「行」是一欄：最多兩欄，截斷處補省略號（三欄在手機與桌機的封面上都放不下） */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     max-block-size: 62%; /* 直排時 block 方向是寬度：書名最多佔六成寬，留位置給作者 */
     max-inline-size: 100%;
     overflow: hidden;
-    padding: 10px 6px;
+    /* 左右改用同色 border 代替 padding：overflow 只裁到 padding 邊，被截掉的欄才不會從旁邊露出來 */
+    padding: 10px 0;
+    border-block: 6px solid #f8f6f1;
     background: #f8f6f1;
     color: #1c1c1e;
     font: 700 clamp(13px, 1.1vw + 6px, 17px)/1.3 var(--serif);
@@ -339,11 +349,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .gen-cover.latin .gen-title {
     align-self: stretch;
     max-block-size: none;
-    display: -webkit-box;
     -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    /* overflow 只裁到 padding 邊，底部改用同色 border，被截掉的行才不會從下緣露出來 */
+    /* 同上：底部改用同色 border，被截掉的行才不會從下緣露出來 */
     padding: 8px 10px 0;
+    border: 0;
     border-bottom: 8px solid #f8f6f1;
     font-size: clamp(12px, .8vw + 6px, 15px);
     letter-spacing: .01em;
@@ -371,7 +380,11 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .empty-shelf i:nth-child(2) { width: 46px; }
 .empty-lead { margin: 0 0 6px; font: 700 20px/1.4 var(--serif); color: var(--ink); }
-.empty p:last-child { margin: 0; font-size: 14px; }
+.empty p:last-of-type { margin: 0; font-size: 14px; }
+.empty-action { margin-top: 20px; }
+/* 觸控裝置拖不了檔案，空狀態只講按鈕 */
+@media (hover: none) { .hint-drag { display: none; } }
+@media (hover: hover) { .hint-tap { display: none; } }
 
 #drop-hint {
     position: fixed;
@@ -459,13 +472,16 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     text-align: center;
     font: 600 15px/1 var(--serif);
 }
+/* 開書時焦點放在書名讓螢幕閱讀器念出來；它不是控制項，不畫焦點框 */
+#book-title:focus-visible { outline: none; }
 .chrome-bottom {
     bottom: 0;
     height: calc(64px + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
     border-top: 1px solid var(--line);
 }
-.where { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 0 8px; }
+/* minmax(0, 1fr)：不然欄寬會被不換行的長章節名撐開，百分比被擠出畫面 */
+.where { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 0 8px; }
 .where-row {
     display: flex;
     justify-content: space-between;
@@ -482,7 +498,7 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
 .chrome-hidden .chrome-top { transform: translateY(-100%); }
 .chrome-hidden .chrome-bottom { transform: translateY(100%); }
 
-/* 閱讀頁頂端的栞：工具列收起時垂下，點它開目次 */
+/* 閱讀頁頂端的栞：工具列收起時垂下，點它叫回工具列 */
 .shiori {
     position: absolute;
     top: 0;
@@ -494,7 +510,7 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     border: 0;
     background: none;
     cursor: pointer;
-    transition: transform 240ms var(--ease);
+    transition: transform 240ms var(--ease), visibility 0s;
 }
 /* 帶子實長 52px、往上藏 10px；hover 時往下拉出來 */
 .shiori::before {
@@ -510,7 +526,8 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
 }
 .shiori:hover::before, .shiori:focus-visible::before { transform: translateY(10px); }
 .shiori:focus-visible { outline-offset: -2px; }
-#reader:not(.chrome-hidden) .shiori { transform: translateY(-100%); }
+/* 工具列出現時栞收進去；同樣等動畫結束才 hidden，收進畫面外後 Tab 就不會停在它身上 */
+#reader:not(.chrome-hidden) .shiori { transform: translateY(-100%); visibility: hidden; transition-delay: 0s, 240ms; }
 
 /* ---------- 面板（目次、排版） ---------- */
 
@@ -551,7 +568,8 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     background: rgba(0, 0, 0, 0);
     transition: background-color 260ms var(--ease), display 260ms allow-discrete;
 }
-#reader:has([popover]:popover-open) #scrim { display: block; }
+/* 設定面板不在 #reader 裡（書架也用得到），從 :root 看它開了沒 */
+#reader:has(#toc:popover-open) #scrim, :root:has(#settings:popover-open) #scrim { display: block; }
 #reader:has(#toc:popover-open) #scrim { background: rgba(0, 0, 0, .3); }
 @starting-style { #reader:has(#toc:popover-open) #scrim { background: rgba(0, 0, 0, 0); } }
 
@@ -583,7 +601,9 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     background: currentColor;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
 }
+/* content-box：全域 border-box 會讓 padding 吃掉 13px 的寬，三角形縮成一個點 */
 #toc-list svg {
+    box-sizing: content-box;
     margin-inline-start: -22px;
     padding-inline: 4px 6px;
     fill: currentColor;
@@ -619,7 +639,32 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     border: 0;
     min-width: 0;
 }
+/* 英文標籤（Line spacing）比兩個漢字寬 */
+:lang(en) .field { grid-template-columns: 80px minmax(0, 1fr); }
 .field-label { float: left; padding: 0; font-size: 13px; color: var(--ink-2); }
+.field-group + .field-group { margin-top: 18px; border-top: 1px solid var(--line); }
+/* 只在書架或只在閱讀頁用得到的欄位 */
+[data-view="library"] [data-scope="reader"], [data-view="reader"] [data-scope="library"] { display: none; }
+/* 書架上第一組（字級等）藏起來了，下一組成了面板的第一組，不畫分隔線 */
+[data-view="library"] .field-group[data-scope="reader"] + .field-group { margin-top: 0; border-top: 0; }
+
+/* 閱讀頁的鍵盤說明；觸控裝置用不到 */
+.keys dl { display: grid; gap: 8px; margin: 0; padding: 14px 20px 0; font-size: 13px; color: var(--ink-2); }
+.keys dl div { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: 12px; }
+.keys dd { margin: 0; }
+kbd {
+    display: inline-block;
+    min-width: 24px;
+    padding: 1px 6px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: var(--paper);
+    color: var(--ink);
+    font: 600 12px/1.5 var(--sans);
+    text-align: center;
+}
+@media (hover: none) { .keys { display: none; } }
 
 .seg, .stepper {
     display: flex;
@@ -669,9 +714,45 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     transition: background-color 150ms var(--ease);
 }
 .stepper button:hover { background: var(--paper); }
+.stepper button[aria-disabled="true"] { opacity: .35; cursor: default; background: none; }
 .stepper output { text-align: center; font-size: 14px; font-variant-numeric: tabular-nums; }
 
+/* ---------- 保存 ---------- */
+
+[data-persist="true"] .if-unsaved, [data-persist="false"] .if-saved { display: none; }
+.storage-hint { margin: -16px 0 24px; font-size: 13px; color: var(--ink-2); }
+.link-btn {
+    margin-inline-start: 4px;
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+#persist-dialog {
+    width: min(400px, calc(100vw - 32px));
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 16px 48px -16px rgba(0, 0, 0, .35);
+}
+#persist-dialog::backdrop { background: rgba(0, 0, 0, .3); }
+#persist-dialog h2 { margin: 0 0 8px; font: 700 18px/1.35 var(--serif); }
+#persist-dialog p { margin: 0 0 24px; color: var(--ink-2); }
+.dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+
 /* ---------- 窄螢幕 ---------- */
+
+@media (min-width: 641px) {
+    /* 書架上從頁首的設定鈕往下長，對齊內容欄右緣 */
+    [data-view="library"] #settings { top: 80px; right: max(24px, calc((100vw - 1120px) / 2 + 24px)); }
+}
 
 @media (max-width: 640px) {
     :root { --gap: 18px; }
@@ -680,8 +761,7 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     #continue { gap: 20px; padding: 24px 16px 36px; margin-bottom: 32px; }
     .continue-cover { width: 96px; }
     .continue-body h2 { font-size: 19px; }
-    .continue-where { margin-top: 10px; }
-    .meter { margin-bottom: 16px; }
+    .continue-where { margin: 10px 0 16px; }
     .shelf-section { padding: 0 16px; }
     .shelf { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); row-gap: 32px; }
     .book-title { margin-top: 20px; font-size: 14px; }
@@ -700,4 +780,13 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after, ::backdrop { transition-duration: 0ms !important; animation: none !important; }
+}
+
+/* Windows 高對比：背景色和陰影會被系統蓋掉，靠它們表達的東西改用邊框或系統色 */
+@media (forced-colors: active) {
+    .btn, #toast { border: 1px solid ButtonText; }
+    .seg input:checked + span { outline: 2px solid Highlight; outline-offset: -2px; }
+    /* 栞是工具列收起時唯一的入口，不能跟著背景一起消失 */
+    .shiori::before, .shiori-tail, .obi[data-state="reading"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+    .gen-cover .gen-title, .gen-cover.latin .gen-title { border-color: Canvas; }
 }

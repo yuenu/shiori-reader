@@ -20,6 +20,8 @@ colors:
   night-paper: "#1b1b1b"
   night-ink: "#e4e2de"
   night-shu: "#e8664a"
+  night-obi-paper: "#cfccc5"
+  night-obi-done: "#3b3b3d"
   cloth-navy: "#24384f"
   cloth-brick: "#7b2f2a"
   cloth-pine: "#2f5a4e"
@@ -49,6 +51,11 @@ typography:
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.6
+  control:
+    fontFamily: "system-ui, -apple-system, PingFang TC, Noto Sans TC, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.4
   label:
     fontFamily: "system-ui, -apple-system, PingFang TC, Noto Sans TC, sans-serif"
     fontSize: "13px"
@@ -76,6 +83,13 @@ components:
   button-primary:
     backgroundColor: "{colors.shu}"
     textColor: "{colors.shu-ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.sm}"
+    padding: "0 18px"
+    height: "40px"
+  button-quiet:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
     typography: "{typography.body}"
     rounded: "{rounded.sm}"
     padding: "0 18px"
@@ -109,6 +123,11 @@ components:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
+  dialog:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+    padding: "24px"
 ---
 
 # Design System: 書架（EPUB 閱讀器）
@@ -144,10 +163,11 @@ components:
 書名用系統明體（Songti TC／Noto Serif TC），介面用系統黑體。比例收斂（1.15–1.2），以字重和明／黑對比分層，不靠超大字級。
 
 ### Hierarchy
-- `shelf-heading`：頁面標題「書架」。
+- `shelf-heading`：頁面標題「書架」，手機縮到 24px。
 - `feature-title`：繼續閱讀的書名，手機縮到 19px。
-- `book-title`：書架上的書名，最多兩行。
+- `book-title`：書架上的書名，最多兩行，手機縮到 14px。
 - `body`／`label`：介面內文與欄位標籤。
+- `control`：分段選項、步進器數值、toast、讀到哪一章、空狀態說明這類次要介面文字。
 - `obi`：書腰文字，加寬字距、等寬數字。
 
 ### Named Rules
@@ -184,23 +204,39 @@ components:
 
 ### Buttons
 - 主要按鈕：朱底白字、40px 高、6px 圓角、字重 600，hover 加深 14%，按下時下移 1px。
+- 次要按鈕（quiet）：紙色底、細線框，尺寸同主要按鈕。書架有書時「加入書籍」退成次要，朱色留給「繼續閱讀」；空書架時它是唯一的主要動作。
 - 圖示按鈕：40px 方形、透明底，hover 淡墨底。圖示是 24px 格、1.75 線寬的描邊 SVG（`#i-*` sprite），不用 Unicode 字元代替。
 
 ### Inputs / Fields
 - 排版設定一律用分段選項（radio），讓所有選擇攤開可見，不藏在下拉選單裡。選中的那格浮起成紙色。
-- 字級用步進器（A − 100% + A）。
+- 設定面板書架與閱讀頁共用一個（`#settings`），欄位用 `data-scope` 標出只在哪一頁出現：
+  - 閱讀頁（排版鈕 Aa）：文字（字級／行距／字體）｜版面（底色／方向／翻頁）｜鍵盤說明。
+  - 書架（頁首的設定鈕，滑桿圖示）：底色、語言｜保存。
+  - 組與組之間一條細線。語言選項用各自的語言寫（繁體中文／English），切換即時生效，不重新載入。
+- 字級用步進器（A − 100% + A），到 70%／200% 時那一側變淡（`aria-disabled`，焦點不會被踢掉）。
 - 底色選項直接用各自的底色和字色當色票。
 
+### Dialog
+- 只用在需要停下來確認的事：目前只有「保存在這台裝置／不再保存」。紙色底、12px 圓角、面板同款投影，背後 30% 黑遮罩。
+- 標題用明體 18px，說明用 ink-2；按鈕靠右，「取消」是次要按鈕、確認是主要按鈕。預設焦點在「取消」，Esc 等同取消。
+- 從設定面板打開時，關閉後把面板開回來、焦點放回原本的選項。
+
+### 保存
+- 預設不保存：書只在這個分頁的記憶體裡。書架標題下方有一行 ink-2 小字說明，後面接一個底線文字按鈕「保存在這台裝置…」；保存後這行消失。
+- 空書架的說明文字也依是否保存換一句。
+
 ### Navigation
-- 閱讀頁：點畫面左右三成翻頁，點中間叫出／收起工具列；方向鍵翻頁；翻頁時工具列自動收起。
+- 閱讀頁：點畫面左右三成翻頁，點中間叫出／收起工具列；翻頁時工具列自動收起，捲動模式下自己捲動也會收起。
+- 鍵盤：← → 依畫面左右翻頁；空白鍵、PageDown／Shift＋空白鍵、PageUp 依閱讀順序翻頁；Esc 切換工具列；工具列收起時按 Tab 會先叫出工具列。
+- 開書會推一筆瀏覽紀錄：瀏覽器返回鍵、手機返回手勢與「回書架」按鈕是同一件事，都回到書架。
 - 目次是從左側滑入的抽屜，打開時有遮罩；點遮罩、按 Esc、按 ✕ 或選章節都會關閉。
 
 ### 書腰（Signature）
-貼在書封下緣 17% 的帶子：「未讀」米白、「讀到 N%」朱色、「讀完」墨黑。這是書架上唯一的進度表示，不再另外放百分比徽章。
+貼在書封下緣 17% 的帶子：「未讀」米白、「讀到 N%」朱色、「讀完」墨黑。這是書架上唯一的進度表示，不再另外放百分比徽章；「繼續閱讀」帶也只用一行文字寫讀到哪，不另加進度條。夜讀時米白壓暗成 `night-obi-paper`，墨黑改成炭灰 `night-obi-done`，免得融進地色。
 
 ### 栞（Signature）
 - 「繼續閱讀」的書封後面垂一條栞，滑過時會輕輕擺動（整個介面唯一的編排動畫）。
-- 閱讀頁頂端也有一條栞：工具列收起時垂下，點它開目次；工具列出現時它收進去。
+- 閱讀頁頂端也有一條栞：工具列收起時垂下，點它叫回整個工具列（目次從工具列進）；工具列出現時它收進去，也退出 Tab 順序。
 
 ## Do's and Don'ts
 
@@ -214,3 +250,5 @@ components:
 - 不要用 CSS 假造紙紋、布紋、木紋。
 - 不要在標題上方放小字 kicker，也不要用 emoji 或 Unicode 字元充當圖示。
 - 不要讓收起的工具列還能被 Tab 聚焦。
+- 不要用降透明度表達「次要」：圖示至少 3:1、文字至少 4.5:1，三種底色都要過。
+- 不要只靠背景色或陰影表達狀態：Windows 高對比會把它們蓋掉，選中、栞、閱讀中書腰在 `forced-colors` 下改用系統色或外框。

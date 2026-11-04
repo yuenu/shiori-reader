@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-view="library" data-persist="false">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -24,6 +24,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
             <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
             <symbol id="i-type" viewBox="0 0 24 24"><path d="M3 18l5-12 5 12M4.8 14h6.4M15 18v-6.5a2.5 2.5 0 015 0V18M15 15h5"/></symbol>
+            <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
             <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
             <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
             <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></symbol>
@@ -33,34 +34,39 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <main id="library">
         <header class="lib-head">
             <h1>書架</h1>
-            <label class="btn btn-accent" id="add-btn">
-                <svg class="icon"><use href="#i-plus"/></svg>
-                <span>加入書籍</span>
-                <input id="file-input" type="file" accept=".epub,application/epub+zip" multiple hidden>
-            </label>
+            <div class="lib-actions">
+                <button type="button" class="icon-btn" popovertarget="settings" aria-label="設定"><svg class="icon"><use href="#i-sliders"/></svg></button>
+                <button type="button" class="btn btn-accent" id="add-btn">
+                    <svg class="icon"><use href="#i-plus"/></svg>
+                    <span>加入書籍</span>
+                </button>
+            </div>
+            <input id="file-input" type="file" accept=".epub,application/epub+zip" multiple hidden>
         </header>
 
         <section id="continue" hidden aria-labelledby="continue-title">
-            <button class="continue-cover" aria-label="繼續閱讀">
+            <!-- 跟旁邊的「繼續閱讀」按鈕做同一件事：留給滑鼠點，不進 Tab 順序也不念兩次 -->
+            <button class="continue-cover" tabindex="-1" aria-hidden="true">
                 <span class="cover-slot"></span>
-                <span class="shiori-tail" aria-hidden="true"></span>
+                <span class="shiori-tail"></span>
             </button>
             <div class="continue-body">
                 <h2 id="continue-title"></h2>
                 <p class="continue-author"></p>
                 <p class="continue-where"></p>
-                <div class="meter" aria-hidden="true"><span></span></div>
                 <button class="btn btn-accent continue-go">繼續閱讀</button>
             </div>
         </section>
 
         <section class="shelf-section" aria-labelledby="shelf-title">
             <h2 id="shelf-title" class="shelf-title">全部書籍 <span id="count"></span></h2>
+            <p id="storage-hint" class="storage-hint if-unsaved" hidden>只在這個分頁：關閉後書架會清空。<button type="button" class="link-btn" id="keep-btn">保存在這台裝置…</button></p>
             <ul id="books" class="shelf"></ul>
             <div id="empty" class="empty" hidden>
                 <div class="empty-shelf" aria-hidden="true"><i></i><i></i><i></i></div>
                 <p class="empty-lead">書架還是空的</p>
-                <p>按右上角「加入書籍」，或直接把 .epub 檔拖進這個視窗。<br>書只存在這台裝置的瀏覽器裡，不會上傳。</p>
+                <p><span class="hint-drag">按右上角「加入書籍」，或直接把 .epub 檔拖進這個視窗。</span><span class="hint-tap">按右上角「加入書籍」選擇 .epub 檔。</span><br><span class="if-unsaved">書只放在這個分頁裡，不會上傳；關閉分頁就會清空，要留著請到設定開啟保存。</span><span class="if-saved">書保存在這台裝置的瀏覽器裡，不會上傳。</span></p>
+                <button id="samples-btn" class="btn btn-quiet empty-action">載入範例書</button>
             </div>
         </section>
 
@@ -80,24 +86,24 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     </main>
 
     <main id="reader" hidden>
-        <div id="viewer"><p class="viewer-loading">正在打開…</p></div>
+        <div id="viewer"><p class="viewer-loading" role="status">正在打開…</p></div>
 
-        <button id="shiori" class="shiori" popovertarget="toc" aria-label="目次"></button>
+        <button id="shiori" class="shiori" aria-label="顯示工具列" aria-keyshortcuts="Escape"></button>
 
         <header class="chrome chrome-top">
             <button id="back" class="icon-btn" aria-label="回書架"><svg class="icon"><use href="#i-back"/></svg></button>
-            <h1 id="book-title"></h1>
-            <button class="icon-btn" popovertarget="toc" aria-label="目次"><svg class="icon"><use href="#i-list"/></svg></button>
+            <h1 id="book-title" tabindex="-1"></h1>
+            <button id="toc-btn" class="icon-btn" popovertarget="toc" aria-label="目次"><svg class="icon"><use href="#i-list"/></svg></button>
             <button class="icon-btn" popovertarget="settings" aria-label="排版設定"><svg class="icon"><use href="#i-type"/></svg></button>
         </header>
 
         <footer class="chrome chrome-bottom">
-            <button id="prev" class="icon-btn" aria-label="向左翻頁"><svg class="icon"><use href="#i-back"/></svg></button>
+            <button id="prev" class="icon-btn" aria-label="上一頁" aria-keyshortcuts="ArrowLeft"><svg class="icon"><use href="#i-back"/></svg></button>
             <div class="where">
                 <div class="where-row"><span id="chapter"></span><span id="percent">0%</span></div>
                 <input id="progress" type="range" min="0" max="1" step="any" value="0" aria-label="閱讀進度">
             </div>
-            <button id="next" class="icon-btn" aria-label="向右翻頁"><svg class="icon"><use href="#i-next"/></svg></button>
+            <button id="next" class="icon-btn" aria-label="下一頁" aria-keyshortcuts="ArrowRight"><svg class="icon"><use href="#i-next"/></svg></button>
         </footer>
 
         <!-- popover 的 ::backdrop 不攔點擊，點擊會穿進書本 iframe；用一層真的遮罩接住，觸發原生的 light dismiss -->
@@ -110,13 +116,16 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             </header>
             <nav id="toc-list"></nav>
         </aside>
+    </main>
 
-        <form id="settings" popover aria-labelledby="settings-heading">
-            <header class="panel-head">
-                <h2 id="settings-heading">排版</h2>
-                <button type="button" class="icon-btn" popovertarget="settings" popovertargetaction="hide" aria-label="關閉排版設定"><svg class="icon"><use href="#i-close"/></svg></button>
-            </header>
+    <!-- 書架與閱讀頁共用的設定面板：data-scope 標出只在某一頁出現的欄位（html 的 data-view 決定目前在哪一頁） -->
+    <form id="settings" popover aria-labelledby="settings-heading">
+        <header class="panel-head">
+            <h2 id="settings-heading">設定</h2>
+            <button type="button" class="icon-btn" popovertarget="settings" popovertargetaction="hide" aria-label="關閉設定"><svg class="icon"><use href="#i-close"/></svg></button>
+        </header>
 
+        <div class="field-group" data-scope="reader">
             <div class="field">
                 <span class="field-label">字級</span>
                 <div class="stepper">
@@ -143,7 +152,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                     <label><input type="radio" name="font" value="sans"><span class="f-sans">黑體</span></label>
                 </div>
             </fieldset>
+        </div>
 
+        <div class="field-group">
             <fieldset class="field">
                 <legend class="field-label">底色</legend>
                 <div class="seg seg-swatch">
@@ -153,7 +164,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                 </div>
             </fieldset>
 
-            <fieldset class="field">
+            <fieldset class="field" data-scope="reader">
                 <legend class="field-label">方向</legend>
                 <div class="seg">
                     <label><input type="radio" name="writing" value=""><span>原書</span></label>
@@ -162,15 +173,54 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                 </div>
             </fieldset>
 
-            <fieldset class="field">
+            <fieldset class="field" data-scope="reader">
                 <legend class="field-label">翻頁</legend>
                 <div class="seg">
                     <label><input type="radio" name="flow" value="paginated"><span>分頁</span></label>
                     <label><input type="radio" name="flow" value="scrolled"><span>捲動</span></label>
                 </div>
             </fieldset>
+
+            <fieldset class="field" data-scope="library">
+                <legend class="field-label">語言</legend>
+                <div class="seg">
+                    <label><input type="radio" name="lang" value="zh-Hant"><span lang="zh-Hant">繁體中文</span></label>
+                    <label><input type="radio" name="lang" value="en"><span lang="en">English</span></label>
+                </div>
+            </fieldset>
+        </div>
+
+        <div class="field-group" data-scope="library">
+            <fieldset class="field">
+                <legend class="field-label">保存</legend>
+                <div class="seg">
+                    <label><input type="radio" name="persist" value="false"><span>只在這個分頁</span></label>
+                    <label><input type="radio" name="persist" value="true"><span>存在這台裝置</span></label>
+                </div>
+            </fieldset>
+        </div>
+
+        <!-- 觸控裝置用不到，CSS 在 hover: none 時藏起來 -->
+        <div class="field-group keys" data-scope="reader">
+            <dl>
+                <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>依畫面左右翻頁</dd></div>
+                <div><dt><kbd>空白鍵</kbd></dt><dd>下一頁</dd></div>
+                <div><dt><kbd>Esc</kbd></dt><dd>顯示或收起工具列</dd></div>
+            </dl>
+        </div>
+    </form>
+
+    <!-- 保存與否的二次確認；預設焦點在「取消」，按 Esc 等同取消 -->
+    <dialog id="persist-dialog" aria-labelledby="persist-title" aria-describedby="persist-desc">
+        <form method="dialog">
+            <h2 id="persist-title"></h2>
+            <p id="persist-desc"></p>
+            <div class="dialog-actions">
+                <button value="cancel" class="btn btn-quiet" autofocus>取消</button>
+                <button value="confirm" class="btn btn-accent" id="persist-confirm"></button>
+            </div>
         </form>
-    </main>
+    </dialog>
 
     <div id="drop-hint" aria-hidden="true"><p>放開以加入書架</p></div>
     <p id="toast" role="status" aria-live="polite"></p>

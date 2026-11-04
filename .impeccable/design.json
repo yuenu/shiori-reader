@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T11:20:00+08:00",
+  "generatedAt": "2026-11-04T11:40:00+08:00",
   "title": "Design System: 書架（EPUB 閱讀器）",
   "extensions": {
     "colorMeta": {
@@ -13,6 +13,7 @@
       "shelf-heading": { "displayName": "書架標題", "purpose": "頁面標題，只有一個。" },
       "feature-title": { "displayName": "繼續閱讀書名", "purpose": "繼續閱讀帶的書名。" },
       "book-title": { "displayName": "書名", "purpose": "書架上的書名，最多兩行。" },
+      "control": { "displayName": "次要介面文字", "purpose": "分段選項、步進器數值、toast、讀到哪一章。" },
       "obi": { "displayName": "書腰", "purpose": "書腰上的進度文字。" }
     },
     "shadows": [
