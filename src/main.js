@@ -345,8 +345,20 @@ const show = name => {
     if (name === 'library') document.title = t('書架')
 }
 
-const setChrome = visible => $('#reader').classList.toggle('chrome-hidden', !visible)
+// 滑鼠停在畫面上下緣（工具列的位置）時工具列一直顯示，移開再收起
+let peek = false
+const setChrome = visible => $('#reader').classList.toggle('chrome-hidden', !visible && !peek)
 const toggleChrome = () => setChrome($('#reader').classList.contains('chrome-hidden'))
+// iframe 裡的座標要加上 iframe 的位置；觸控沒有 hover，不管；面板開著時滑鼠在面板上，不動工具列
+const onPeek = (e, top = 0) => {
+    if (e.pointerType !== 'mouse' || $('#reader').hidden || $(':popover-open')) return
+    const y = e.clientY + top
+    const edge = y < $('.chrome-top').offsetHeight || y > innerHeight - $('.chrome-bottom').offsetHeight
+    if (edge === peek) return
+    peek = edge
+    setChrome(edge)
+}
+document.addEventListener('pointermove', e => onPeek(e))
 const turn = dir => {
     setChrome(false)
     dir < 0 ? view?.goLeft() : view?.goRight()
@@ -420,10 +432,15 @@ const onDocClick = doc => e => {
 const openBook = async (id, cfi) => {
     try {
         const [meta, file, progress] = await Promise.all([db.getBook(id), db.getFile(id), db.getProgress(id)])
-        // 網址上的書已經不在書架（刪掉了，或沒開保存、重新整理後清空）：回書架就好
-        if (!meta) return exitReader()
+        // 網址上的書已經不在書架（刪掉了，或沒開保存、重新整理後清空）：回書架；沒開保存的話說一聲為什麼
+        if (!meta) {
+            if (!settings.persist) toast(t('重新整理後書架已清空（書只放在這個分頁裡）；要留著請到設定開啟保存。'), 8000)
+            return exitReader()
+        }
         closeBook()
         current = meta
+        // 上一本書的滑鼠位置不算數，開書時工具列照常顯示到翻頁為止
+        peek = false
         $('#viewer').replaceChildren(Object.assign(document.createElement('p'), {
             className: 'viewer-loading', role: 'status', textContent: t('正在打開…') }))
         $('#book-title').textContent = document.title = meta.title
@@ -453,6 +470,7 @@ const openBook = async (id, cfi) => {
             doc.addEventListener('click', onDocClick(doc))
             doc.addEventListener('wheel', onUserScroll, { passive: true })
             doc.addEventListener('touchmove', onUserScroll, { passive: true })
+            doc.addEventListener('pointermove', e => onPeek(e, doc.defaultView.frameElement.getBoundingClientRect().top))
         })
         view.addEventListener('wheel', onUserScroll, { passive: true })
         view.addEventListener('touchmove', onUserScroll, { passive: true })

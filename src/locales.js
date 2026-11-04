@@ -80,6 +80,7 @@ const en = {
     '只支援 EPUB、MOBI、AZW3、FB2、CBZ 檔': 'Only EPUB, MOBI, AZW3, FB2 and CBZ files are supported',
     '這本書沒有目次。': 'This book has no table of contents.',
     '無法打開這本書，檔案可能已損壞。': 'Couldn’t open this book. The file may be damaged.',
+    '重新整理後書架已清空（書只放在這個分頁裡）；要留著請到設定開啟保存。': 'Reloading cleared your shelf (books only stay in this tab). To keep them, turn on saving in Settings.',
 }
 
 const zhHans = {
@@ -163,6 +164,7 @@ const zhHans = {
     '只支援 EPUB、MOBI、AZW3、FB2、CBZ 檔': '只支持 EPUB、MOBI、AZW3、FB2、CBZ 文件',
     '這本書沒有目次。': '这本书没有目录。',
     '無法打開這本書，檔案可能已損壞。': '无法打开这本书，文件可能已损坏。',
+    '重新整理後書架已清空（書只放在這個分頁裡）；要留著請到設定開啟保存。': '刷新后书架已清空（书只放在这个标签页里）；要保留请到设置里开启保存。',
 }
 
 // 一個值不能對到兩個 key（例：「この端末に保存」只能有一處），否則換語言時 keyOf 會對錯
@@ -247,6 +249,7 @@ const ja = {
     '只支援 EPUB、MOBI、AZW3、FB2、CBZ 檔': '対応形式は EPUB・MOBI・AZW3・FB2・CBZ です',
     '這本書沒有目次。': 'この本には目次がありません。',
     '無法打開這本書，檔案可能已損壞。': 'この本を開けませんでした。ファイルが破損している可能性があります。',
+    '重新整理後書架已清空（書只放在這個分頁裡）；要留著請到設定開啟保存。': '再読み込みで本棚が空になりました（本はこのタブの中だけにあります）。残したいときは設定で保存をオンにしてください。',
 }
 
 export const dicts = { en, 'zh-Hans': zhHans, ja }

@@ -9,10 +9,33 @@ const addSamples = async page => {
     await expect(books(page)).toHaveCount(2)
 }
 
-test('加入範例書；預設不保存，重新整理後書架清空', async ({ page }) => {
+test('加入範例書；預設不保存，在閱讀頁重新整理會回到清空的書架並說明原因', async ({ page }) => {
     await addSamples(page)
+    await books(page).first().click()
+    await expect(page.locator('.viewer-loading')).toHaveCount(0)
     await page.reload()
     await expect(page.locator('#empty')).toBeVisible()
+    await expect(page).not.toHaveURL(/#book=/)
+    await expect(page.locator('#toast')).toHaveClass(/show/)
+})
+
+// 捲動模式下書本 iframe 蓋到畫面頂端，測到 iframe 裡的座標換算
+for (const flow of ['paginated', 'scrolled']) test(`滑鼠移到上下緣叫出工具列，移開收起（${flow}）`, async ({ page }) => {
+    await page.addInitScript(flow => localStorage.setItem('settings', JSON.stringify({ flow })), flow)
+    await addSamples(page)
+    await books(page).first().click()
+    await expect(page.locator('.viewer-loading')).toHaveCount(0)
+    const reader = page.locator('#reader')
+    const { width, height } = page.viewportSize()
+    await page.mouse.move(width / 2, height / 2)
+    await page.keyboard.press('Escape')
+    await expect(reader).toHaveClass(/chrome-hidden/)
+    await page.mouse.move(width / 2, 5)
+    await expect(reader).not.toHaveClass(/chrome-hidden/)
+    await page.mouse.move(width / 2, height / 2)
+    await expect(reader).toHaveClass(/chrome-hidden/)
+    await page.mouse.move(width / 2, height - 5)
+    await expect(reader).not.toHaveClass(/chrome-hidden/)
 })
 
 test('開啟保存後，書、進度和開著的書重新整理都還在', async ({ page }) => {
