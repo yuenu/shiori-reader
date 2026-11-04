@@ -36,6 +36,7 @@ const en = {
     '目次': 'Contents',
     '回書架': 'Back to library',
     '排版設定': 'Typography settings',
+    '全螢幕': 'Full screen',
     '顯示工具列': 'Show toolbar',
     '上一頁': 'Previous page',
     '下一頁': 'Next page',

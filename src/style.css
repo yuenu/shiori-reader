@@ -492,6 +492,7 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
 #chapter { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #percent { flex: none; font-variant-numeric: tabular-nums; }
 #progress { width: 100%; margin: 0; accent-color: var(--accent); cursor: pointer; }
+#fs-btn[aria-pressed="true"] .fs-off, #fs-btn[aria-pressed="false"] .fs-on { display: none; }
 
 /* visibility 延到動畫結束才切，收起後按鈕就不會被 Tab 到 */
 .chrome-hidden .chrome { opacity: 0; visibility: hidden; transition-delay: 0s, 0s, 240ms; }

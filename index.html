@@ -28,6 +28,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
             <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
             <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></symbol>
+            <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+            <symbol id="i-shrink" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M15 20v-5h5M9 20v-5H4"/></symbol>
         </defs>
     </svg>
 
@@ -95,13 +97,20 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             <h1 id="book-title" tabindex="-1"></h1>
             <button id="toc-btn" class="icon-btn" popovertarget="toc" aria-label="目次"><svg class="icon"><use href="#i-list"/></svg></button>
             <button class="icon-btn" popovertarget="settings" aria-label="排版設定"><svg class="icon"><use href="#i-type"/></svg></button>
+            <!-- 切換鈕用固定名稱 + aria-pressed，圖示依 aria-pressed 換（見 CSS） -->
+            <button id="fs-btn" class="icon-btn" aria-label="全螢幕" aria-pressed="false" aria-keyshortcuts="F">
+                <svg class="icon fs-off"><use href="#i-expand"/></svg>
+                <svg class="icon fs-on"><use href="#i-shrink"/></svg>
+            </button>
         </header>
 
         <footer class="chrome chrome-bottom">
             <button id="prev" class="icon-btn" aria-label="上一頁" aria-keyshortcuts="ArrowLeft"><svg class="icon"><use href="#i-back"/></svg></button>
             <div class="where">
                 <div class="where-row"><span id="chapter"></span><span id="percent">0%</span></div>
-                <input id="progress" type="range" min="0" max="1" step="any" value="0" aria-label="閱讀進度">
+                <!-- 刻度標出每一章的起點（同 foliate-js 的 reader.html），拖到附近會吸附到章首 -->
+                <input id="progress" type="range" min="0" max="1" step="any" value="0" aria-label="閱讀進度" list="ticks">
+                <datalist id="ticks"></datalist>
             </div>
             <button id="next" class="icon-btn" aria-label="下一頁" aria-keyshortcuts="ArrowRight"><svg class="icon"><use href="#i-next"/></svg></button>
         </footer>
@@ -206,6 +215,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                 <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>依畫面左右翻頁</dd></div>
                 <div><dt><kbd>空白鍵</kbd></dt><dd>下一頁</dd></div>
                 <div><dt><kbd>Esc</kbd></dt><dd>顯示或收起工具列</dd></div>
+                <div><dt><kbd>F</kbd></dt><dd>全螢幕</dd></div>
             </dl>
         </div>
     </form>

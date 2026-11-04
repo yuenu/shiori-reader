@@ -342,6 +342,12 @@ const page = dir => {
     setChrome(false)
     dir < 0 ? view?.prev() : view?.next()
 }
+// 整頁全螢幕（不是只放大 #reader）：設定面板在 #reader 外面也照常出現；foliate 換尺寸時會留在原位置
+const toggleFullscreen = () => {
+    if (!document.fullscreenEnabled) return
+    document.fullscreenElement ? document.exitFullscreen()
+        : document.documentElement.requestFullscreen({ navigationUI: 'hide' })
+}
 
 const closeBook = () => {
     view?.close()
@@ -365,6 +371,9 @@ const keys = {
     PageDown: () => page(1),
     PageUp: () => page(-1),
     Escape: toggleChrome,
+    // 大寫鎖定或按著 Shift 時 e.key 是大寫
+    f: toggleFullscreen,
+    F: toggleFullscreen,
 }
 const onKey = e => {
     // 面板開著時按鍵留給面板（Esc 關面板，不要順便收工具列）
@@ -437,6 +446,8 @@ const openBook = async (id, cfi) => {
         $('#toc-list').replaceChildren(tocView?.element
             ?? Object.assign(document.createElement('p'), { className: 'toc-empty', textContent: t('這本書沒有目次。') }))
         $('#progress').dir = view.book.dir ?? 'ltr'
+        $('#ticks').replaceChildren(...view.getSectionFractions().map(value =>
+            Object.assign(document.createElement('option'), { value })))
         // 左右兩顆鈕是畫面方向；直排（rtl）書往左才是下一頁
         const rtl = view.book.dir === 'rtl'
         $('#prev').setAttribute('aria-label', t(rtl ? '下一頁' : '上一頁'))
@@ -454,6 +465,8 @@ const openBook = async (id, cfi) => {
 const leaveReader = async () => {
     const id = current?.id
     for (const p of document.querySelectorAll(':popover-open')) p.hidePopover()
+    // 全螢幕鈕只在閱讀頁，回書架就退出，不然書架上找不到出口
+    if (document.fullscreenElement) document.exitFullscreen()
     closeBook()
     show('library')
     await renderLibrary()
@@ -476,6 +489,10 @@ $('#prev').onclick = () => turn(-1)
 $('#next').onclick = () => turn(1)
 $('#progress').oninput = e => view?.goToFraction(+e.target.value)
 $('#back').onclick = exitReader
+// iPhone Safari 沒有 Fullscreen API，按鈕直接藏起來
+$('#fs-btn').hidden = !document.fullscreenEnabled
+$('#fs-btn').onclick = toggleFullscreen
+document.addEventListener('fullscreenchange', () => $('#fs-btn').setAttribute('aria-pressed', !!document.fullscreenElement))
 // 栞：工具列收起時唯一看得到的入口，點它叫回整個工具列
 $('#shiori').onclick = () => {
     setChrome(true)
