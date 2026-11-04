@@ -229,6 +229,9 @@ const renderLibrary = async () => {
     }))
 }
 
+// foliate-js 認得的格式；PDF 要另外接 pdf.js，先不支援
+const bookExt = /\.(epub|mobi|azw3?|fb2|fbz|cbz)$/i
+
 const importFiles = async files => {
     if (!files.length) return
     const btn = $('#add-btn')
@@ -245,9 +248,12 @@ const importFiles = async files => {
         }
         try {
             const book = await makeBook(file)
+            // foliate 不檢查 Kindle DRM，加密的書會照樣開成亂碼
+            if (book.mobi?.headers.palmdoc.encryption) throw new Error('DRM-protected')
             await db.addBook({
                 id,
-                title: text(book.metadata?.title) || file.name.replace(/\.epub$/i, ''),
+                // CBZ 沒有書名時 foliate 會直接拿檔名（含副檔名）當書名
+                title: (text(book.metadata?.title) || file.name).replace(bookExt, ''),
                 author: formatAuthor(book.metadata?.author),
                 // EPUB 給的是陣列，其他格式可能是字串
                 language: [book.metadata?.language].flat()[0],
@@ -267,7 +273,7 @@ const importFiles = async files => {
     const summary = [
         added && t('已加入 {n} 本書', { n: added }),
         skipped && t('{n} 本已在書架上', { n: skipped }),
-        failed.length && t('無法讀取：{names}（可能不是有效的 EPUB 檔）', { names: failed.join(t('、')) }),
+        failed.length && t('無法讀取：{names}（檔案可能已損壞，或有 DRM 保護）', { names: failed.join(t('、')) }),
     ].filter(Boolean)
     if (summary.length) toast(summary.join(t('・')), failed.length ? 8000 : 4000)
     renderLibrary()
@@ -312,9 +318,9 @@ addEventListener('drop', e => {
     dragDepth = 0
     document.body.classList.remove('dragging')
     const files = [...e.dataTransfer.files]
-    const epubs = files.filter(f => f.name.toLowerCase().endsWith('.epub'))
-    if (files.length && !epubs.length) toast(t('只支援 .epub 檔'))
-    importFiles(epubs)
+    const books = files.filter(f => bookExt.test(f.name))
+    if (files.length && !books.length) toast(t('只支援 EPUB、MOBI、AZW3、FB2、CBZ 檔'))
+    importFiles(books)
 })
 
 // ---- 閱讀器 ----

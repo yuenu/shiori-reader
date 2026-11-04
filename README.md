@@ -10,7 +10,7 @@ Demo: https://shiori.josh-hsu.com
 
 ## Features
 
-- Import: click **Add books** or drop .epub files onto the window, several at a time
+- Import: click **Add books** or drop ebook files (EPUB, MOBI, AZW3, FB2, CBZ) onto the window, several at a time
 - An empty shelf offers public-domain sample books in one click
 - The library is sorted by what you read last, and a book opens where you left off
 - Turning pages: buttons, arrow keys, Space / Page Down, tapping the left or right side, swiping
