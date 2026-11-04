@@ -327,9 +327,17 @@ addEventListener('drop', e => {
 
 let view, current, tocView
 
+// 閱讀頁的網址是 #book=<id>，重新整理會回到同一本書
+const bookId = () => new URLSearchParams(location.hash.slice(1)).get('book')
+const libraryURL = () => location.pathname + location.search
+
 const show = name => {
     // 開書時多推一筆瀏覽紀錄：瀏覽器返回鍵／手機返回手勢會回到書架，而不是離開網站
-    if (name === 'reader' && $('#reader').hidden) history.pushState({ reader: true }, '')
+    // 已經在閱讀頁那筆（重新整理、下一頁）就不再推；直接開書的網址（書籤）後面沒有書架，先補一筆
+    if (name === 'reader' && $('#reader').hidden && !history.state?.reader) {
+        if (location.hash) history.replaceState(null, '', libraryURL())
+        history.pushState({ reader: true }, '', `#${new URLSearchParams({ book: current.id })}`)
+    }
     // 設定面板依這個決定哪些欄位要出現（data-scope）
     document.documentElement.dataset.view = name
     $('#library').hidden = name !== 'library'
@@ -412,6 +420,8 @@ const onDocClick = doc => e => {
 const openBook = async (id, cfi) => {
     try {
         const [meta, file, progress] = await Promise.all([db.getBook(id), db.getFile(id), db.getProgress(id)])
+        // 網址上的書已經不在書架（刪掉了，或沒開保存、重新整理後清空）：回書架就好
+        if (!meta) return exitReader()
         closeBook()
         current = meta
         $('#viewer').replaceChildren(Object.assign(document.createElement('p'), {
@@ -479,6 +489,7 @@ const leaveReader = async () => {
     for (const p of document.querySelectorAll(':popover-open')) p.hidePopover()
     // 全螢幕鈕只在閱讀頁，回書架就退出，不然書架上找不到出口
     if (document.fullscreenElement) document.exitFullscreen()
+    if (location.hash) history.replaceState(null, '', libraryURL())
     closeBook()
     show('library')
     await renderLibrary()
@@ -490,11 +501,12 @@ const leaveReader = async () => {
 }
 // 「回書架」也走瀏覽紀錄，返回鍵和畫面按鈕才會是同一件事、紀錄不會多一筆
 const exitReader = () => history.state?.reader ? history.back() : leaveReader()
+// 上一頁回書架；下一頁回到剛才那本書
 addEventListener('popstate', () => {
-    if (!$('#reader').hidden) leaveReader()
+    const id = bookId()
+    if (!id && !$('#reader').hidden) leaveReader()
+    else if (id && $('#reader').hidden) openBook(id)
 })
-// 重新整理後書架是初始畫面，清掉留下來的閱讀頁紀錄
-if (history.state?.reader) history.replaceState(null, '')
 
 document.addEventListener('keydown', onKey)
 $('#prev').onclick = () => turn(-1)
@@ -522,6 +534,7 @@ db.init(settings.persist).then(on => {
     saveSettings()
     syncPersist()
     renderLibrary()
+    if (bookId()) openBook(bookId())
 })
 
 // 離線可用；開發模式不註冊，免得快取住 Vite 的開發模組
