@@ -220,6 +220,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .continue-go:hover .icon { transform: translateX(3px); }
 
 .shelf-section { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+.lib-foot { max-width: 1120px; margin: 48px auto 0; padding: 0 24px; font-size: 13px; color: var(--ink-2); text-align: center; }
+.lib-foot a { color: inherit; text-underline-offset: 3px; }
+.lib-foot a:hover { color: var(--ink); }
 .shelf-title {
     display: flex;
     align-items: baseline;
@@ -799,7 +802,7 @@ kbd {
     .continue-cover { width: 96px; }
     .continue-body h2 { font-size: 19px; }
     .continue-where { margin: 10px 0 16px; }
-    .shelf-section { padding: 0 16px; }
+    .shelf-section, .lib-foot { padding: 0 16px; }
     .shelf { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); row-gap: 32px; }
     .book-title { margin-top: 20px; font-size: 14px; }
 
