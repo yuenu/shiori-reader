@@ -9,14 +9,25 @@ const addSamples = async page => {
     await expect(books(page)).toHaveCount(2)
 }
 
-test('加入範例書；預設不保存，在閱讀頁重新整理會回到清空的書架並說明原因', async ({ page }) => {
+test('加入範例書；預設不保存，在閱讀頁重新整理會回到清空的書架並說明原因，加回同一本會回到剛才那頁', async ({ page }) => {
     await addSamples(page)
     await books(page).first().click()
     await expect(page.locator('.viewer-loading')).toHaveCount(0)
+    await page.locator('#progress').fill('0.5')
+    await expect(page.locator('#percent')).toHaveText(/^[45]\d%$/)
+    await expect(page).toHaveURL(/#book=.*&cfi=/)
+    const percent = await page.locator('#percent').textContent()
+    const title = await page.locator('#book-title').textContent()
+
     await page.reload()
     await expect(page.locator('#empty')).toBeVisible()
     await expect(page).not.toHaveURL(/#book=/)
     await expect(page.locator('#toast')).toHaveClass(/show/)
+
+    // 範例書就是同一個檔案
+    await page.click('#samples-btn')
+    await expect(page.locator('#book-title')).toHaveText(title)
+    await expect(page.locator('#percent')).toHaveText(percent)
 })
 
 // 捲動模式下書本 iframe 蓋到畫面頂端，測到 iframe 裡的座標換算

@@ -25,7 +25,7 @@ Requires a browser with the Popover API (Chrome 114, Safari 17, Firefox 125 or l
 
 ## Privacy and storage
 
-By default, books stay in the current tab only. They are held in memory, never uploaded, and gone once you close the tab.
+By default, books stay in the current tab only. They are held in memory, never uploaded, and gone once you close the tab. Your reading position is kept in the URL, so after a reload the book is gone, but adding the same file again takes you back to the page you were on.
 
 To keep your shelf, open **Settings** on the library page and set **Keep books** to **On this device**. You'll be asked to confirm; after that, books and reading progress are stored in the browser's IndexedDB on this device. Switching back to **This tab only** removes them from the device (also after a confirmation). Clearing the site's data clears the shelf too.
 

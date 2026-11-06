@@ -286,6 +286,11 @@ const importFiles = async files => {
     ].filter(Boolean)
     if (summary.length) toast(summary.join(t('・')), failed.length ? 8000 : 4000)
     renderLibrary()
+    // 重新整理前在讀的那本加回來了：直接開到剛才那頁
+    if (pending && await db.getBook(pending.id)) {
+        openBook(pending.id, pending.cfi)
+        pending = null
+    }
 }
 
 $('#add-btn').onclick = () => $('#file-input').click()
@@ -334,10 +339,12 @@ addEventListener('drop', e => {
 
 // ---- 閱讀器 ----
 
-let view, current, tocView
+// pending：沒開保存時重新整理，書不見了，記住網址上的書和位置，等使用者把同一個檔案加回來
+let view, current, tocView, pending
 
-// 閱讀頁的網址是 #book=<id>，重新整理會回到同一本書
-const bookId = () => new URLSearchParams(location.hash.slice(1)).get('book')
+// 閱讀頁的網址是 #book=<id>，重新整理會回到同一本書；沒開保存時還會帶 &cfi=<位置>（見 onRelocate）
+const hashParams = () => new URLSearchParams(location.hash.slice(1))
+const bookId = () => hashParams().get('book')
 const libraryURL = () => location.pathname + location.search
 
 const show = name => {
@@ -403,6 +410,12 @@ const onRelocate = ({ target, detail: { fraction, cfi, tocItem } }) => {
     $('#page').textContent = !scrolled && pages > 2 ? t('本章 {page} / {pages} 頁', { page, pages: pages - 2 }) : ''
     if (tocItem?.href) tocView?.setCurrentHref(tocItem.href)
     if (current) db.saveProgress({ id: current.id, cfi, fraction, chapter: tocItem?.label, openedAt: Date.now() })
+    // 沒開保存時位置記在網址：重新整理後書不在了，加回同一個檔案還能接著讀（書本身不存）
+    // 有開保存就不記，免得書籤裡的舊位置蓋掉 IndexedDB 的進度
+    // Safari 太頻繁 replaceState 會丟錯（捲動模式），漏一次沒關係，下次 relocate 會補上
+    if (current && !settings.persist) try {
+        history.replaceState(history.state, '', `#${new URLSearchParams({ book: current.id, cfi })}`)
+    } catch {}
 }
 
 const keys = {
@@ -448,7 +461,10 @@ const openBook = async (id, cfi) => {
         const [meta, file, progress] = await Promise.all([db.getBook(id), db.getFile(id), db.getProgress(id)])
         // 網址上的書已經不在書架（刪掉了，或沒開保存、重新整理後清空）：回書架；沒開保存的話說一聲為什麼
         if (!meta) {
-            if (!settings.persist) toast(t('重新整理後書架已清空（書只放在這個分頁裡）；要留著請到設定開啟保存。'), 8000)
+            if (!settings.persist) {
+                pending = { id, cfi }
+                toast(t('重新整理後書架已清空（書只放在這個分頁裡）。再加入同一個檔案就會回到剛才那頁；要留著書請到設定開啟保存。'), 10000)
+            }
             return exitReader()
         }
         closeBook()
@@ -565,7 +581,7 @@ db.init(settings.persist).then(on => {
     saveSettings()
     syncPersist()
     renderLibrary()
-    if (bookId()) openBook(bookId())
+    if (bookId()) openBook(bookId(), hashParams().get('cfi'))
 })
 
 // 離線可用；開發模式不註冊，免得快取住 Vite 的開發模組
