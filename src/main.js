@@ -382,11 +382,16 @@ const closeBook = () => {
     view = current = tocView = null
 }
 
-const onRelocate = ({ detail: { fraction, cfi, tocItem } }) => {
+const onRelocate = ({ target, detail: { fraction, cfi, tocItem } }) => {
     $('#progress').value = fraction
     $('#progress').setAttribute('aria-valuetext', pct(fraction))
     $('#percent').textContent = pct(fraction)
     $('#chapter').textContent = tocItem?.label ?? ''
+    // foliate 只排目前這一章，所以頁數算到章內為止；pages 含前後兩張留白頁，page 從 1 起算
+    // 捲動模式沒有頁；固定版面（漫畫）的 renderer 沒有 page/pages，也不顯示
+    // ponytail: 全書頁數得把每章都排過一次，要的話再做
+    const { page, pages, scrolled } = target.renderer
+    $('#page').textContent = !scrolled && pages > 2 ? t('本章 {page} / {pages} 頁', { page, pages: pages - 2 }) : ''
     if (tocItem?.href) tocView?.setCurrentHref(tocItem.href)
     if (current) db.saveProgress({ id: current.id, cfi, fraction, chapter: tocItem?.label, openedAt: Date.now() })
 }
@@ -445,7 +450,7 @@ const openBook = async (id, cfi) => {
             className: 'viewer-loading', role: 'status', textContent: t('正在打開…') }))
         $('#book-title').textContent = document.title = meta.title
         setBookLang($('#book-title'), meta)
-        $('#chapter').textContent = ''
+        $('#chapter').textContent = $('#page').textContent = ''
         setChrome(true)
         show('reader')
         // 焦點移到書名，螢幕閱讀器會念出開了哪本書；原本的封面按鈕已經隱藏

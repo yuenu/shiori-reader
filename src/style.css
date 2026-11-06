@@ -527,7 +527,9 @@ foliate-view { position: relative; display: block; width: 100%; height: 100%; }
     color: var(--ink-2);
 }
 #chapter { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#percent { flex: none; font-variant-numeric: tabular-nums; }
+#page, #percent { flex: none; font-variant-numeric: tabular-nums; }
+/* 頁數緊跟章名，百分比推到右邊 */
+#page { margin-inline-end: auto; }
 #progress { width: 100%; margin: 0; accent-color: var(--accent); cursor: pointer; }
 #fs-btn[aria-pressed="true"] .fs-off, #fs-btn[aria-pressed="false"] .fs-on { display: none; }
 

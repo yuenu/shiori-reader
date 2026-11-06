@@ -62,3 +62,16 @@ test('開啟保存後，書、進度和開著的書重新整理都還在', async
     await expect(books(page)).toHaveCount(2)
     await expect(page.locator('.obi[data-state=reading]')).toHaveCount(1)
 })
+
+test('分頁模式顯示本章第幾頁，翻頁會跟著變', async ({ page }) => {
+    await addSamples(page)
+    await books(page).first().click()
+    await expect(page.locator('.viewer-loading')).toHaveCount(0)
+    const where = page.locator('#page')
+    await expect(where).toHaveText(/\d+\D+\d+/)
+    const num = async () => +(await where.textContent()).match(/\d+/)[0]
+    const before = await num()
+    // PageDown 依閱讀順序翻；ArrowRight 在直排書是往回翻
+    await page.keyboard.press('PageDown')
+    await expect.poll(num).toBe(before + 1)
+})

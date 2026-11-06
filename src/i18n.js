@@ -11,7 +11,7 @@ export const t = (s, vars = {}) => {
 // 原文和各語言譯文都對回原文 key：不管畫面上現在是哪種語言，都找得到該換成什麼
 const keyOf = new Map(Object.values(dicts).flatMap(Object.entries).flatMap(([k, v]) => [[k, k], [v, k]]))
 // 書名、作者、目次是書的內容，不翻；這幾塊換語言後由各自的 render 重畫
-const CONTENT = '#books, #continue, #toc-list, #book-title, #chapter'
+const CONTENT = '#books, #continue, #toc-list, #book-title, #chapter, #page'
 
 // 就地翻譯畫面上的文字與 aria-label（模組在 DOM 解析完才執行）；帶插值的字串由 render 重畫
 const translateDOM = () => {
