@@ -36,7 +36,7 @@ const fonts = {
 }
 // 底色預設跟著系統的深淺色；persist 不給預設值，交給 db.init 判斷（見 db.js）
 const settings = {
-    fontSize: 100, lineHeight: 1.7, font: '', writing: '', flow: 'paginated',
+    fontSize: 100, lineHeight: 1.7, font: '', writing: '', flow: 'paginated', margin: '',
     theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
 }
 try { Object.assign(settings, JSON.parse(localStorage.getItem('settings'))) } catch {}
@@ -61,14 +61,23 @@ const getCSS = ({ fontSize, lineHeight, font, theme, writing }) => `
     ::selection { background: rgba(217, 71, 43, .28); }
 `
 
+// 左右邊距 → foliate 的 [gap, max-inline-size]：邊距小時每欄也放寬，大螢幕才真的鋪滿
+const margins = { small: ['2%', '960px'], '': ['6%', '720px'], large: ['10%', '600px'] }
+
 const applySettings = () => {
     document.documentElement.dataset.theme = settings.theme
     $('#font-size-out').value = `${settings.fontSize}%`
     // 用 aria-disabled 而不是 disabled：按到底時焦點不會被踢掉
     for (const b of form.querySelectorAll('[data-step]'))
         b.setAttribute('aria-disabled', +b.dataset.step < 0 ? settings.fontSize <= 70 : settings.fontSize >= 200)
-    view?.renderer.setStyles?.(getCSS(settings))
-    view?.renderer.setAttribute('flow', settings.flow)
+    const r = view?.renderer
+    if (!r) return
+    r.setStyles?.(getCSS(settings))
+    // 每設一次屬性 foliate 就重排一次，邊距沒變就不設；flow 照舊每次設（改字級後靠它重排）
+    const [gap, maxInline] = margins[settings.margin] ?? margins['']
+    if (r.getAttribute('gap') !== gap) r.setAttribute('gap', gap)
+    if (r.getAttribute('max-inline-size') !== maxInline) r.setAttribute('max-inline-size', maxInline)
+    r.setAttribute('flow', settings.flow)
 }
 
 const saveSettings = () => localStorage.setItem('settings', JSON.stringify(settings))
@@ -480,7 +489,6 @@ const openBook = async (id, cfi) => {
         view.addEventListener('wheel', onUserScroll, { passive: true })
         view.addEventListener('touchmove', onUserScroll, { passive: true })
         view.renderer.setAttribute('margin', '64px')
-        view.renderer.setAttribute('gap', '6%')
         applySettings()
 
         tocView = view.book.toc?.length ? createTOCView(view.book.toc, href => {

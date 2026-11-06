@@ -75,3 +75,15 @@ test('分頁模式顯示本章第幾頁，翻頁會跟著變', async ({ page }) 
     await page.keyboard.press('PageDown')
     await expect.poll(num).toBe(before + 1)
 })
+
+// foliate 的元素在 closed shadow root 裡，直接量書本 iframe 的欄寬
+test('邊距設成最小，橫排書每欄變寬', async ({ page }) => {
+    await addSamples(page)
+    await books(page).nth(1).click()
+    await expect(page.locator('.viewer-loading')).toHaveCount(0)
+    const colWidth = () => page.frames().at(-1).evaluate(() => parseFloat(getComputedStyle(document.documentElement).columnWidth))
+    const before = await colWidth()
+    await page.click('#toc-btn ~ [popovertarget=settings]')
+    await page.click('label:has(input[name=margin][value=small])')
+    await expect.poll(colWidth).toBeGreaterThan(before)
+})
