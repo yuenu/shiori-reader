@@ -126,7 +126,9 @@ button { -webkit-tap-highlight-color: transparent; }
 
 /* ---------- 書架 ---------- */
 
-#library { padding-bottom: 64px; }
+/* 內容不滿一頁時，書籍區撐開把頁尾推到底 */
+#library { padding-bottom: 64px; min-height: 100dvh; display: flex; flex-direction: column; }
+#library > * { width: 100%; }
 
 .lib-head {
     display: flex;
@@ -219,7 +221,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .continue-go .icon { transition: transform 200ms var(--ease); }
 .continue-go:hover .icon { transform: translateX(3px); }
 
-.shelf-section { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+.shelf-section { flex-grow: 1; max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .lib-foot { max-width: 1120px; margin: 48px auto 0; padding: 0 24px; font-size: 13px; color: var(--ink-2); text-align: center; }
 .lib-foot a { color: inherit; text-underline-offset: 3px; }
 .lib-foot a:hover { color: var(--ink); }
