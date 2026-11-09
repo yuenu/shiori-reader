@@ -117,19 +117,33 @@ const syncPersist = () => {
     document.documentElement.dataset.persist = settings.persist
 }
 
-const persistDialog = $('#persist-dialog')
-const askPersist = (on, from = '') => {
-    syncPersist()
-    persistDialog.dataset.on = on
-    persistDialog.dataset.from = from
-    $('#persist-title').textContent = t(on ? '在這台裝置保存書籍？' : '不再保存書籍？')
-    $('#persist-desc').textContent = t(on
-        ? '書和閱讀進度會存在這個瀏覽器裡，下次打開還在，不會上傳。共用或公用電腦上建議不要開啟。'
-        : '已保存的書會從這台裝置移除。關閉這個分頁前還能繼續讀，之後書架就會清空。')
-    $('#persist-confirm').textContent = t(on ? '保存在這台裝置' : '不再保存')
+// 二次確認：不用 confirm()，它的按鈕跟著瀏覽器語系而不是介面語言，樣式也改不了
+// 關閉後瀏覽器會把焦點還給開啟前的元素
+const confirmDialog = $('#confirm-dialog')
+const ask = (title, desc, ok) => new Promise(resolve => {
+    $('#confirm-title').textContent = title
+    $('#confirm-desc').textContent = desc
+    $('#confirm-ok').textContent = ok
     // 按 Esc 關閉不會改 returnValue，先清掉上一次的結果
-    persistDialog.returnValue = ''
-    persistDialog.showModal()
+    confirmDialog.returnValue = ''
+    confirmDialog.showModal()
+    confirmDialog.addEventListener('close', () => resolve(confirmDialog.returnValue === 'confirm'), { once: true })
+})
+
+const askPersist = async (on, from = '') => {
+    syncPersist()
+    const ok = await ask(
+        t(on ? '在這台裝置保存書籍？' : '不再保存書籍？'),
+        t(on
+            ? '書和閱讀進度會存在這個瀏覽器裡，下次打開還在，不會上傳。共用或公用電腦上建議不要開啟。'
+            : '已保存的書會從這台裝置移除。關閉這個分頁前還能繼續讀，之後書架就會清空。'),
+        t(on ? '保存在這台裝置' : '不再保存'))
+    if (ok) await applyPersist(on)
+    // showModal 會關掉設定面板，焦點還不回去：從面板來就把面板開回來；從書架提示來而提示已經消失，就放到第一本書
+    if (from === 'settings') {
+        form.showPopover()
+        form.querySelector('input[name=persist]:checked')?.focus()
+    } else if (!$('#keep-btn').offsetParent) $('.book-cover')?.focus()
 }
 const applyPersist = async on => {
     try {
@@ -143,14 +157,6 @@ const applyPersist = async on => {
     syncPersist()
     toast(t(on ? '書架會保存在這台裝置' : '已不再保存，關閉分頁後書架會清空'))
 }
-persistDialog.addEventListener('close', async () => {
-    if (persistDialog.returnValue === 'confirm') await applyPersist(persistDialog.dataset.on === 'true')
-    // showModal 會關掉設定面板，焦點還不回去：從面板來就把面板開回來；從書架提示來而提示已經消失，就放到第一本書
-    if (persistDialog.dataset.from === 'settings') {
-        form.showPopover()
-        form.querySelector('input[name=persist]:checked')?.focus()
-    } else if (!$('#keep-btn').offsetParent) $('.book-cover')?.focus()
-})
 $('#keep-btn').onclick = () => askPersist(true)
 
 // ---- 書架 ----
@@ -226,7 +232,7 @@ const renderLibrary = async () => {
         q('.book-cover').onclick = () => openBook(book.id)
         q('.book-del').setAttribute('aria-label', t('從書架刪除《{title}》', book))
         q('.book-del').onclick = async () => {
-            if (!confirm(t('確定從書架刪除《{title}》？\n閱讀進度也會一併刪除。', book))) return
+            if (!await ask(t('從書架刪除《{title}》？', book), t('閱讀進度也會一併刪除。'), t('刪除'))) return
             await db.deleteBook(book.id)
             await renderLibrary()
             // 焦點移到原位置的下一本（刪的是最後一本就移到前一本），鍵盤使用者不必從頁首重來

@@ -239,14 +239,14 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         </div>
     </form>
 
-    <!-- 保存與否的二次確認；預設焦點在「取消」，按 Esc 等同取消 -->
-    <dialog id="persist-dialog" aria-labelledby="persist-title" aria-describedby="persist-desc">
+    <!-- 二次確認（切換保存、刪除書）共用，內容由 main.js 的 ask() 填；預設焦點在「取消」，按 Esc 等同取消 -->
+    <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-desc">
         <form method="dialog">
-            <h2 id="persist-title"></h2>
-            <p id="persist-desc"></p>
+            <h2 id="confirm-title"></h2>
+            <p id="confirm-desc"></p>
             <div class="dialog-actions">
                 <button value="cancel" class="btn btn-quiet" autofocus>取消</button>
-                <button value="confirm" class="btn btn-accent" id="persist-confirm"></button>
+                <button value="confirm" class="btn btn-accent" id="confirm-ok"></button>
             </div>
         </form>
     </dialog>

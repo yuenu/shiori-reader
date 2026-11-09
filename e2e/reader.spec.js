@@ -52,7 +52,7 @@ for (const flow of ['paginated', 'scrolled']) test(`滑鼠移到上下緣叫出�
 test('開啟保存後，書、進度和開著的書重新整理都還在', async ({ page }) => {
     await addSamples(page)
     await page.click('#keep-btn')
-    await page.click('#persist-confirm')
+    await page.click('#confirm-ok')
     await expect(page.locator('html')).toHaveAttribute('data-persist', 'true')
 
     await books(page).first().click()
@@ -72,6 +72,19 @@ test('開啟保存後，書、進度和開著的書重新整理都還在', async
     await page.click('#back')
     await expect(books(page)).toHaveCount(2)
     await expect(page.locator('.obi[data-state=reading]')).toHaveCount(1)
+})
+
+test('刪除書先問過，取消就不刪、焦點回到刪除鈕', async ({ page }) => {
+    await addSamples(page)
+    const del = page.locator('#books .book-del').first()
+    await del.click()
+    await page.keyboard.press('Escape')
+    await expect(del).toBeFocused()
+    await expect(books(page)).toHaveCount(2)
+
+    await del.click()
+    await page.click('#confirm-ok')
+    await expect(books(page)).toHaveCount(1)
 })
 
 test('開了保存而空間不足：說是空間不夠，不是檔案壞掉', async ({ page }) => {
