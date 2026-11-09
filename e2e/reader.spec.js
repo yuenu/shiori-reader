@@ -115,6 +115,29 @@ test('分頁模式顯示本章第幾頁，翻頁會跟著變', async ({ page }) 
     await expect.poll(num).toBe(before + 1)
 })
 
+// 數 foliate renderer 的 render()：換底色只改顏色，改字級才重排
+test('換底色不重排，改字級才重排', async ({ page }) => {
+    await addSamples(page)
+    await books(page).first().click()
+    await expect(page.locator('.viewer-loading')).toHaveCount(0)
+    await page.evaluate(() => {
+        const r = document.querySelector('foliate-view').renderer
+        const render = r.render
+        window.renders = 0
+        r.render = function (...args) {
+            window.renders++
+            return render.apply(this, args)
+        }
+    })
+    const renders = () => page.evaluate(() => window.renders)
+    await page.click('#toc-btn ~ [popovertarget=settings]')
+    await page.click('label:has(input[name=theme][value=sepia])')
+    await page.click('label:has(input[name=theme][value=dark])')
+    expect(await renders()).toBe(0)
+    await page.click('[data-step="10"]')
+    expect(await renders()).toBe(1)
+})
+
 // foliate 的元素在 closed shadow root 裡，直接量書本 iframe 的欄寬
 test('邊距設成最小，橫排書每欄變寬', async ({ page }) => {
     await addSamples(page)

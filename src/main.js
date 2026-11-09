@@ -73,11 +73,16 @@ const applySettings = () => {
     const r = view?.renderer
     if (!r) return
     r.setStyles?.(getCSS(settings))
-    // 每設一次屬性 foliate 就重排一次，邊距沒變就不設；flow 照舊每次設（改字級後靠它重排）
+    // 每設一次屬性 foliate 就重排一次，邊距沒變就不設
     const [gap, maxInline] = margins[settings.margin] ?? margins['']
     if (r.getAttribute('gap') !== gap) r.setAttribute('gap', gap)
     if (r.getAttribute('max-inline-size') !== maxInline) r.setAttribute('max-inline-size', maxInline)
-    r.setAttribute('flow', settings.flow)
+    // 改字級、行距、字體後靠重設 flow 重排；換底色只動顏色，不必整章重排
+    const layout = `${settings.flow} ${settings.fontSize} ${settings.lineHeight} ${settings.font}`
+    if (r.dataset.layout !== layout) {
+        r.dataset.layout = layout
+        r.setAttribute('flow', settings.flow)
+    }
 }
 
 const saveSettings = () => localStorage.setItem('settings', JSON.stringify(settings))
