@@ -74,6 +74,21 @@ test('開啟保存後，書、進度和開著的書重新整理都還在', async
     await expect(page.locator('.obi[data-state=reading]')).toHaveCount(1)
 })
 
+test('開了保存而空間不足：說是空間不夠，不是檔案壞掉', async ({ page }) => {
+    await page.addInitScript(() => {
+        localStorage.setItem('settings', JSON.stringify({ persist: true }))
+        const put = IDBObjectStore.prototype.put
+        IDBObjectStore.prototype.put = function (...args) {
+            if (this.name === 'files') throw new DOMException('full', 'QuotaExceededError')
+            return put.apply(this, args)
+        }
+    })
+    await page.goto('/?lang=en')
+    await page.click('#samples-btn')
+    await expect(page.locator('#toast')).toHaveText('Not enough storage on this device; the remaining books weren’t added')
+    await expect(books(page)).toHaveCount(0)
+})
+
 test('分頁模式顯示本章第幾頁，翻頁會跟著變', async ({ page }) => {
     await addSamples(page)
     await books(page).first().click()

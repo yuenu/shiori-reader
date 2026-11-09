@@ -246,7 +246,7 @@ const importFiles = async files => {
     const btn = $('#add-btn')
     btn.setAttribute('aria-busy', 'true')
     btn.querySelector('span').textContent = t('加入中…')
-    let added = 0, skipped = 0
+    let added = 0, skipped = 0, full = false
     const failed = []
     for (const file of files) {
         // ponytail: 用檔名+大小判斷重複，同一本書改名後會被當成新書
@@ -273,6 +273,11 @@ const importFiles = async files => {
             added++
         } catch (e) {
             console.error(e)
+            // 開了保存而 IndexedDB 滿了：不是檔案壞掉，後面的書也存不進去，不必再一本本解析
+            if (e.name === 'QuotaExceededError') {
+                full = true
+                break
+            }
             failed.push(file.name)
         }
     }
@@ -283,8 +288,9 @@ const importFiles = async files => {
         added && t('已加入 {n} 本書', { n: added }),
         skipped && t('{n} 本已在書架上', { n: skipped }),
         failed.length && t('無法讀取：{names}（檔案可能已損壞，或有 DRM 保護）', { names: failed.join(t('、')) }),
+        full && t('裝置空間不足，剩下的書沒有加入'),
     ].filter(Boolean)
-    if (summary.length) toast(summary.join(t('・')), failed.length ? 8000 : 4000)
+    if (summary.length) toast(summary.join(t('・')), failed.length || full ? 8000 : 4000)
     renderLibrary()
     // 重新整理前在讀的那本加回來了：直接開到剛才那頁
     if (pending && await db.getBook(pending.id)) {
@@ -409,7 +415,8 @@ const onRelocate = ({ target, detail: { fraction, cfi, tocItem } }) => {
     const { page, pages, scrolled } = target.renderer
     $('#page').textContent = !scrolled && pages > 2 ? t('本章 {page} / {pages} 頁', { page, pages: pages - 2 }) : ''
     if (tocItem?.href) tocView?.setCurrentHref(tocItem.href)
-    if (current) db.saveProgress({ id: current.id, cfi, fraction, chapter: tocItem?.label, openedAt: Date.now() })
+    // 存不進去（空間滿了）就算了，不要每翻一頁丟一個未處理的 rejection
+    if (current) db.saveProgress({ id: current.id, cfi, fraction, chapter: tocItem?.label, openedAt: Date.now() }).catch(console.error)
     // 沒開保存時位置記在網址：重新整理後書不在了，加回同一個檔案還能接著讀（書本身不存）
     // 有開保存就不記，免得書籤裡的舊位置蓋掉 IndexedDB 的進度
     // Safari 太頻繁 replaceState 會丟錯（捲動模式），漏一次沒關係，下次 relocate 會補上
