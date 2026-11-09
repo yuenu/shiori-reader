@@ -17,7 +17,7 @@ Demo: https://shiori.josh-hsu.com
 - Typography: size, line spacing, font (original / serif / sans), theme (paper / sepia / night), vertical or horizontal writing, paged or scrolled
 - Table of contents
 - Interface in English, Traditional Chinese, Simplified Chinese or Japanese. It follows your browser language; change it in Settings on the library page, or add `?lang=en` / `?lang=zh-Hant` / `?lang=zh-Hans` / `?lang=ja` to the URL
-- Works offline after the first visit
+- Works offline after the first visit, and installs as an app (desktop install or Add to Home Screen)
 
 Not yet supported: bookmarks, highlights and notes, full-text search.
 
